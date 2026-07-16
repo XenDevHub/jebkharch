@@ -1,0 +1,38 @@
+{
+  "name": "jebkharch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jeb Kharch — Play Smart. Win Real. A skill-based quiz gaming platform.",
+  "scripts": {
+    "dev:api": "pnpm --filter @jebkharch/api dev",
+    "dev:admin": "pnpm --filter @jebkharch/admin dev",
+    "dev:mobile": "pnpm --filter @jebkharch/mobile start",
+    "build:api": "pnpm --filter @jebkharch/api build",
+    "build:admin": "pnpm --filter @jebkharch/admin build",
+    "db:migrate": "pnpm --filter @jebkharch/api prisma:migrate",
+    "db:generate": "pnpm --filter @jebkharch/api prisma:generate",
+    "db:seed": "pnpm --filter @jebkharch/api prisma:seed",
+    "db:studio": "pnpm --filter @jebkharch/api prisma:studio",
+    "lint": "eslint apps packages --ext .ts,.tsx,.js",
+    "format": "prettier --write apps packages",
+    "test": "pnpm --filter @jebkharch/api test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

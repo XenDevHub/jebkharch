@@ -1,0 +1,392 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Jeb Kharch — Prisma Schema
+// Phase 1: Complete database schema with all tables, indexes, and relations
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  PLAYER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ChallengeStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionSource {
+  QUIZ_REWARD
+  QUIZ_ENTRY
+  CHALLENGE_WIN
+  CHALLENGE_ENTRY
+  CHALLENGE_REFUND
+  TOURNAMENT_REWARD
+  TOURNAMENT_ENTRY
+  REFERRAL_BONUS
+  SIGNUP_BONUS
+  DAILY_LOGIN
+  AD_REWARD
+  WITHDRAWAL
+  ADMIN_ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+}
+
+enum AdType {
+  INTERSTITIAL
+  REWARDED
+  BANNER
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN
+  CHANGE_PHONE
+}
+
+// ── Models ────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  phone        String   @unique
+  name         String?
+  email        String?  @unique
+  dob          DateTime?
+  avatarUrl    String?
+  passwordHash String?
+
+  // Coin economy
+  coins        Int      @default(5)   // Start balance = 5 coins
+  xp           Int      @default(0)
+  rank         Int      @default(0)
+
+  // Referral
+  referralCode String   @unique
+  referredBy   String?
+
+  // Subscription
+  isPro        Boolean  @default(false)
+  proExpiresAt DateTime?
+
+  // Auth
+  role         UserRole @default(PLAYER)
+  isBanned     Boolean  @default(false)
+  banReason    String?
+  lastLoginAt  DateTime?
+  lastLoginIp  String?
+
+  // Daily tracking
+  lastDailyBonusAt DateTime?
+
+  // Fraud
+  fraudScore   Int      @default(0)   // 0-100; >70 = high risk
+  isFlagged    Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  otpVerifications     OtpVerification[]
+  quizSessions         QuizSession[]
+  challengesCreated    Challenge[]      @relation("ChallengeCreator")
+  challengesOpposed    Challenge[]      @relation("ChallengeOpponent")
+  challengesWon        Challenge[]      @relation("ChallengeWinner")
+  walletTransactions   WalletTransaction[]
+  withdrawals          Withdrawal[]
+  referrals            Referral[]       @relation("ReferrerUser")
+  referredUsers        Referral[]       @relation("ReferredUser")
+  adLogs               AdLog[]
+  deviceSessions       DeviceSession[]
+  fraudEvents          FraudEvent[]
+
+  @@index([phone])
+  @@index([referralCode])
+  @@index([fraudScore])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model OtpVerification {
+  id         String     @id @default(uuid())
+  phone      String
+  otpCode    String
+  purpose    OtpPurpose @default(LOGIN)
+  expiresAt  DateTime
+  attempts   Int        @default(0)
+  verified   Boolean    @default(false)
+  ipAddress  String?
+  deviceId   String?
+  createdAt  DateTime   @default(now())
+
+  user       User?      @relation(fields: [phone], references: [phone])
+
+  @@index([phone])
+  @@index([expiresAt])
+  @@map("otp_verifications")
+}
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  icon        String
+  difficulty  Difficulty @default(EASY)
+  entryFee    Int        @default(5)
+  isPremium   Boolean    @default(false)
+  isActive    Boolean    @default(true)
+  description String?
+  createdAt   DateTime   @default(now())
+
+  questions    Question[]
+  quizSessions QuizSession[]
+  challenges   Challenge[]
+
+  @@map("categories")
+}
+
+model Question {
+  id            String     @id @default(uuid())
+  categoryId    String
+  questionText  String
+  imageUrl      String?
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String     // 'A' | 'B' | 'C' | 'D'
+  explanation   String
+  difficulty    Difficulty @default(MEDIUM)
+  createdByAi   Boolean    @default(true)
+  isApproved    Boolean    @default(true)   // false = awaiting moderation
+  isFlagged     Boolean    @default(false)  // flagged for review
+  usageCount    Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  category     Category   @relation(fields: [categoryId], references: [id])
+  quizAnswers  QuizAnswer[]
+
+  @@index([categoryId])
+  @@index([difficulty])
+  @@index([isApproved])
+  @@index([createdAt])
+  @@map("questions")
+}
+
+model QuizSession {
+  id          String    @id @default(uuid())
+  userId      String
+  categoryId  String
+  score       Int       @default(0)
+  totalQ      Int       @default(10)
+  coinsSpent  Int       @default(0)
+  coinsWon    Int       @default(0)
+  xpGained    Int       @default(0)
+  timeTaken   Int       @default(0) // total seconds
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  isCompleted Boolean   @default(false)
+
+  user        User      @relation(fields: [userId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
+  answers     QuizAnswer[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([startedAt])
+  @@map("quiz_sessions")
+}
+
+model QuizAnswer {
+  id             String   @id @default(uuid())
+  sessionId      String
+  questionId     String
+  selectedAnswer String   // 'A' | 'B' | 'C' | 'D' | null (skipped)
+  isCorrect      Boolean  @default(false)
+  timeTaken      Int      @default(0) // seconds
+
+  session        QuizSession @relation(fields: [sessionId], references: [id])
+  question       Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@map("quiz_answers")
+}
+
+model Challenge {
+  id          String          @id @default(uuid())
+  creatorId   String
+  opponentId  String?
+  winnerId    String?
+  categoryId  String
+  potAmount   Int             @default(30) // coins pot
+  status      ChallengeStatus @default(PENDING)
+  inviteCode  String          @unique      // short code for invite link
+  expiresAt   DateTime                     // lobby expires after 5 min if unjoined
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+
+  // Each player's score stored as JSON
+  creatorScore  Int?
+  opponentScore Int?
+
+  creator     User     @relation("ChallengeCreator", fields: [creatorId], references: [id])
+  opponent    User?    @relation("ChallengeOpponent", fields: [opponentId], references: [id])
+  winner      User?    @relation("ChallengeWinner", fields: [winnerId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@index([creatorId])
+  @@index([opponentId])
+  @@index([status])
+  @@index([inviteCode])
+  @@map("challenges")
+}
+
+model WalletTransaction {
+  id          String            @id @default(uuid())
+  userId      String
+  type        TransactionType
+  amount      Int               // coins
+  source      TransactionSource
+  status      TransactionStatus @default(COMPLETED)
+  referenceId String?           // e.g., sessionId, challengeId, withdrawalId
+  description String?
+  balanceBefore Int             // coin balance before this tx
+  balanceAfter  Int             // coin balance after this tx
+  createdAt   DateTime          @default(now())
+
+  user        User    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([source])
+  @@map("wallet_transactions")
+}
+
+model Withdrawal {
+  id               String           @id @default(uuid())
+  userId           String
+  easypaisaNumber  String
+  coins            Int
+  status           WithdrawalStatus @default(PENDING)
+  approvedById     String?          // admin user id
+  rejectionReason  String?
+  providerRef      String?          // Easypaisa transaction reference
+  requiresReview   Boolean          @default(false) // true if >1000 coins
+  createdAt        DateTime         @default(now())
+  processedAt      DateTime?
+
+  user             User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("withdrawals")
+}
+
+model Referral {
+  id            String   @id @default(uuid())
+  referrerId    String
+  referredUserId String  @unique   // a user can only be referred once
+  rewardGiven   Boolean  @default(false)
+  deviceId      String?  // device fingerprint for fraud check
+  createdAt     DateTime @default(now())
+
+  referrer      User @relation("ReferrerUser", fields: [referrerId], references: [id])
+  referredUser  User @relation("ReferredUser", fields: [referredUserId], references: [id])
+
+  @@unique([referrerId, referredUserId])
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+model AdLog {
+  id        String   @id @default(uuid())
+  userId    String
+  adType    AdType
+  reward    Int      @default(0) // coins rewarded
+  watchedAt DateTime @default(now())
+  deviceId  String?
+  ipAddress String?
+
+  user      User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([watchedAt])
+  @@map("ad_logs")
+}
+
+model DeviceSession {
+  id          String   @id @default(uuid())
+  userId      String
+  deviceId    String
+  deviceModel String?
+  platform    String?   // 'ios' | 'android'
+  appVersion  String?
+  ipAddress   String?
+  refreshToken String?  // hashed
+  isActive    Boolean  @default(true)
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, deviceId])
+  @@index([deviceId])
+  @@index([userId])
+  @@map("device_sessions")
+}
+
+model FraudEvent {
+  id         String   @id @default(uuid())
+  userId     String
+  reason     String
+  detail     String?
+  severity   Int      @default(1)   // 1-5
+  ipAddress  String?
+  deviceId   String?
+  resolvedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user       User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("fraud_events")
+}
