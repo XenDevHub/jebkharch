@@ -1,7 +1,19 @@
 import { PrismaClient, Difficulty, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { DEFAULT_CATEGORIES } from '../../packages/shared/src';
+// Inline categories to avoid cross-package path resolution issues in Docker build
+const DEFAULT_CATEGORIES = [
+  { name: 'Cricket', icon: '🏏', difficulty: 'EASY' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Movies', icon: '🎬', difficulty: 'EASY' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'History', icon: '📜', difficulty: 'MEDIUM' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Science', icon: '🔬', difficulty: 'MEDIUM' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Islamic Knowledge', icon: '☪️', difficulty: 'EASY' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'General Knowledge', icon: '🌍', difficulty: 'EASY' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Cars', icon: '🚗', difficulty: 'MEDIUM' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Anime', icon: '⚔️', difficulty: 'MEDIUM' as Difficulty, entryFee: 5, isPremium: true },
+  { name: 'Football', icon: '⚽', difficulty: 'EASY' as Difficulty, entryFee: 5, isPremium: false },
+  { name: 'Technology', icon: '💻', difficulty: 'HARD' as Difficulty, entryFee: 5, isPremium: true },
+];
 
 const prisma = new PrismaClient();
 

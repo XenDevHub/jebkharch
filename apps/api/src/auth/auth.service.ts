@@ -15,7 +15,7 @@ import { OtpPurpose, COIN_CONSTANTS, OTP_CONSTANTS } from '@jebkharch/shared';
 import { CreateProfileDto, LoginDto, SendOtpDto, VerifyOtpDto } from './dto/auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { TransactionSource, TransactionType, TransactionStatus } from '@prisma/client';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AuthService {

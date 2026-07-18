@@ -4,7 +4,7 @@ import { COIN_CONSTANTS } from '@jebkharch/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { AdType, TransactionType, TransactionStatus } from '@prisma/client';
 import { TransactionSource } from '@jebkharch/shared';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AdsService {

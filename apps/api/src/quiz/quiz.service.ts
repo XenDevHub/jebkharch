@@ -17,7 +17,7 @@ import {
 } from '@jebkharch/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { TransactionType, TransactionStatus } from '@prisma/client';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class QuizService {

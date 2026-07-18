@@ -10,7 +10,7 @@ import { ChallengeGateway } from './challenge.gateway';
 import { COIN_CONSTANTS, TransactionSource, SocketEvent } from '@jebkharch/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ChallengeStatus, TransactionType, TransactionStatus } from '@prisma/client';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 const CHALLENGE_LOBBY_EXPIRY_MINUTES = 5;
 const CHALLENGE_QUESTIONS = 10;

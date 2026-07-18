@@ -19,7 +19,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Execute a function within a Prisma transaction.
    * All coin-affecting operations MUST use this to ensure atomicity.
    */
-  async runTransaction<T>(fn: (tx: PrismaClient) => Promise<T>): Promise<T> {
-    return this.$transaction(fn as any);
+  async runTransaction<T>(fn: Parameters<PrismaClient['$transaction']>[0]): Promise<T> {
+    return this.$transaction(fn) as Promise<T>;
   }
 }

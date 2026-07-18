@@ -4,7 +4,7 @@ import { QuizService } from '../quiz/quiz.service';
 import { Difficulty } from '@jebkharch/shared';
 import { WithdrawalStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AdminService {

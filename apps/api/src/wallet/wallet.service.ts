@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { COIN_CONSTANTS, TransactionSource } from '@jebkharch/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { WithdrawalStatus, TransactionType, TransactionStatus } from '@prisma/client';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class WalletService {
