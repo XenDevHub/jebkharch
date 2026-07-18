@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: jebkharch_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-jebkharch}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_db_password}
+      POSTGRES_DB: ${DB_NAME:-jebkharch}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: jebkharch_redis_prod
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata_prod:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: jebkharch_api_prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-jebkharch}:${DB_PASSWORD:-secure_db_password}@db:5432/${DB_NAME:-jebkharch}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - STORAGE_PROVIDER=local
+      - STORAGE_LOCAL_PATH=/app/apps/api/uploads
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_prod:/app/apps/api/uploads
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  pgdata_prod:
+  redisdata_prod:
+  uploads_prod:

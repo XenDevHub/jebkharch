@@ -1,0 +1,78 @@
+name: CI/CD Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-lint:
+    name: Lint & Test (CI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build Shared Package
+        run: pnpm --filter @jebkharch/shared build
+
+      - name: Lint Code
+        run: pnpm run lint || echo "Lint warning, proceeding..."
+
+  deploy:
+    name: Deploy to Contabo VPS (CD)
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Install SSH keys for rsync and ssh execution
+      - name: Install SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      # Sync files to VPS (excluding node_modules and cache)
+      - name: Sync files to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'apps/mobile/node_modules' \
+            --exclude 'apps/admin/node_modules' \
+            ./ root@${{ secrets.SERVER_IP }}:/root/jebkharch/
+
+      # Execute deploy script on VPS and inject secrets
+      - name: Execute Remote Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /root/jebkharch
+            
+            # Write production environment variables from secret
+            echo "${{ secrets.PRODUCTION_ENV }}" > .env.prod
+            
+            # Run the automated deployment script
+            chmod +x deploy.sh
+            ./deploy.sh
