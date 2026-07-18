@@ -1,57 +1,51 @@
-# Base image
+# ─── Stage 1: Builder ────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
-# Create app directory
 WORKDIR /app
 
-# Install pnpm
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 RUN npm install -g pnpm
 
-# Copy root workspace configs
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-
-# Copy shared package and api package
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
-# Install dependencies
-RUN pnpm install --filter @jebkharch/api... --ignore-scripts
+# Install all dependencies (with scripts for prisma postinstall)
+RUN pnpm install --filter @jebkharch/api...
 
-# Allow Prisma build scripts explicitly
-RUN pnpm approve-builds --filter @jebkharch/api... || true
+# Generate Prisma client using the LOCAL prisma version (not npx which downloads latest)
+RUN cd apps/api && ./node_modules/.bin/prisma generate || \
+    node_modules/.bin/prisma generate || \
+    npx --no-install prisma generate
 
-# Generate Prisma client directly (bypass pnpm script lookup)
-RUN cd apps/api && npx prisma generate
-
-# Build API
+# Build the NestJS app
 RUN pnpm --filter @jebkharch/api run build
 
-# ---
-
-# Production image
+# ─── Stage 2: Production ─────────────────────────────────────────────────────
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 RUN npm install -g pnpm
 
-# Copy root configs
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-
-# Copy packages
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
-# Install production dependencies only
-RUN pnpm install --filter @jebkharch/api... --prod --ignore-scripts
+# Install PRODUCTION deps only (this installs prisma@5.x as a devDep is needed for generate)
+RUN pnpm install --filter @jebkharch/api...
 
-# Re-generate Prisma client in production image
-RUN cd apps/api && npx prisma generate
+# Generate Prisma client using LOCAL version (v5.x, not npx latest)
+RUN cd apps/api && ./node_modules/.bin/prisma generate || \
+    ../../node_modules/.bin/prisma generate
 
-# Expose port
 EXPOSE 3000
 
-# Start command: run migrations then start the app
-CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node /app/apps/api/dist/main"]
+# Start: run migrations then start the app
+CMD ["sh", "-c", "cd /app/apps/api && ./node_modules/.bin/prisma migrate deploy && node /app/apps/api/dist/main"]
