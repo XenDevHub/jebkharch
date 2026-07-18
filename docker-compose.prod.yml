@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: jebkharch_db_prod
     restart: always
     environment:
@@ -13,6 +11,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-jebkharch} -d ${DB_NAME:-jebkharch}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -22,6 +26,11 @@ services:
       - "6379:6379"
     volumes:
       - redisdata_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   api:
     build:
@@ -44,8 +53,10 @@ services:
     volumes:
       - uploads_prod:/app/apps/api/uploads
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   pgdata_prod:
