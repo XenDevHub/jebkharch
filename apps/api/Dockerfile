@@ -14,14 +14,14 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
-# Install dependencies (only for api and shared)
-RUN pnpm install --filter @jebkharch/api...
+# Install dependencies
+RUN pnpm install --filter @jebkharch/api... --ignore-scripts
 
-# Generate Prisma client
-RUN pnpm --filter @jebkharch/api run db:generate
+# Allow Prisma build scripts explicitly
+RUN pnpm approve-builds --filter @jebkharch/api... || true
 
-# Build shared package
-RUN pnpm --filter @jebkharch/shared run build || echo "Shared package built"
+# Generate Prisma client directly (bypass pnpm script lookup)
+RUN cd apps/api && npx prisma generate
 
 # Build API
 RUN pnpm --filter @jebkharch/api run build
@@ -45,10 +45,13 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
 # Install production dependencies only
-RUN pnpm install --filter @jebkharch/api... --prod
+RUN pnpm install --filter @jebkharch/api... --prod --ignore-scripts
+
+# Re-generate Prisma client in production image
+RUN cd apps/api && npx prisma generate
 
 # Expose port
 EXPOSE 3000
 
-# Start command
-CMD ["pnpm", "--filter", "@jebkharch/api", "start:prod"]
+# Start command: run migrations then start the app
+CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node /app/apps/api/dist/main"]
