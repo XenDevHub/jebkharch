@@ -32,8 +32,8 @@ fi
 
 # 3. Pull/Build and Run docker-compose
 echo "Building and starting containers..."
-export $(cat .env.prod | xargs)
-docker-compose -f docker-compose.prod.yml up --build -d
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up --build -d
+
 
 # 4. Run Prisma Database Migrations and Seeding
 echo "Running database migrations inside container..."
