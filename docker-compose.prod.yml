@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:15-alpine
     container_name: jebkharch_db_prod
     restart: always
     environment:
@@ -12,7 +12,7 @@ services:
     volumes:
       - pgdata_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-jebkharch} -d ${DB_NAME:-jebkharch}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,10 +27,11 @@ services:
     volumes:
       - redisdata_prod:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
 
   api:
     build:
