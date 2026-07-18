@@ -60,7 +60,7 @@ done
 
 # 5. Run database seed (idempotent — upsert safe to run multiple times)
 echo "Running database seed..."
-docker exec jebkharch_api_prod sh -c "cd /app/apps/api && npx ts-node --transpileOnly prisma/seed.ts" || \
+docker exec jebkharch_api_prod sh -c "cd /app/apps/api && (node prisma/seed-dist/seed.js || npx ts-node --transpileOnly prisma/seed.ts)" || \
   echo "⚠️  Seed skipped or already done."
 
 echo ""

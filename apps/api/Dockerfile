@@ -18,6 +18,9 @@ RUN pnpm install --filter @jebkharch/api... --ignore-scripts
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
 
+# Build the shared library first
+RUN pnpm --filter @jebkharch/shared run build
+
 # Build the NestJS app
 RUN pnpm --filter @jebkharch/api run build
 
