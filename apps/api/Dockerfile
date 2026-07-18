@@ -12,8 +12,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 
-# Install all dependencies
-RUN pnpm install --filter @jebkharch/api...
+# Install all dependencies (--ignore-scripts because prisma generate runs explicitly below)
+RUN pnpm install --filter @jebkharch/api... --ignore-scripts
 
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
@@ -45,8 +45,8 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
-# Install all deps (including devDeps needed for prisma generate & ts-node seed)
-RUN pnpm install --filter @jebkharch/api...
+# Install all deps (--ignore-scripts because prisma generate runs explicitly below)
+RUN pnpm install --filter @jebkharch/api... --ignore-scripts
 
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
