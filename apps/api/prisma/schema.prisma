@@ -122,7 +122,6 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  otpVerifications     OtpVerification[]
   quizSessions         QuizSession[]
   challengesCreated    Challenge[]      @relation("ChallengeCreator")
   challengesOpposed    Challenge[]      @relation("ChallengeOpponent")
@@ -153,8 +152,6 @@ model OtpVerification {
   ipAddress  String?
   deviceId   String?
   createdAt  DateTime   @default(now())
-
-  user       User?      @relation(fields: [phone], references: [phone])
 
   @@index([phone])
   @@index([expiresAt])
