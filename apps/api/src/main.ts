@@ -18,6 +18,10 @@ async function bootstrap() {
       process.env.ADMIN_PANEL_URL || 'http://localhost:5173',
       'http://localhost:3000',
       'http://localhost:8081', // Expo Metro
+      // Production origins
+      'https://admin.jebkharch.pk',
+      'https://api.jebkharch.pk',
+      'http://109.199.122.238:3000',
     ],
     credentials: true,
   });

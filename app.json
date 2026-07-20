@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f35ea800-64d3-4dd8-99cb-601b43d672b0"
+      }
+    },
+    "android": {
+      "package": "com.xentro_info_tech.jebkharch"
+    }
+  }
+}
