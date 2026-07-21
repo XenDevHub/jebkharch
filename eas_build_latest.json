@@ -1,0 +1,50 @@
+[
+  {
+    "id": "37418de0-9d56-4262-9424-fadbbb9c4622",
+    "status": "ERRORED",
+    "platform": "ANDROID",
+    "error": {
+      "errorCode": "EAS_BUILD_UNKNOWN_GRADLE_ERROR",
+      "message": "Gradle build failed with unknown error. See logs for the \"Run gradlew\" phase for more information."
+    },
+    "artifacts": {},
+    "fingerprint": {
+      "id": "019f82a5-af30-7130-9a92-08332f8da7d0",
+      "hash": "16f0e5d45dbede0c4a363a5dd8fb240a81e11425"
+    },
+    "initiatingActor": {
+      "id": "8732fce4-d71d-4724-987e-b9409db27880",
+      "displayName": "xentro_info_tech"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/f35ea800-64d3-4dd8-99cb-601b43d672b0/37418de0-9d56-4262-9424-fadbbb9c4622/2026-07-21T03%3A08%3A47Z-725e9d87-8667-40fc-8f05-a6a219c9f25b.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260721%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260721T030937Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=3997df89f135323888ebdd67447134dfc02316979ef5f98834ea7cc86a5b6f7cd2005c4fb986d9e3ebd44caa2459231ebf5399486a3ae8fa9b2f5e3ceb75bbfb7d1c10f7225ae578393c1270e1cd5c372230e6f8c336f184160d59b7bfd58fe3dd4e2ff58b7a7fbbed918e3a58a09111308178d30884333741eea18bf13f6e643d48bb66aaec6631fd01ab26d8e6f9689d94e08a0c00675354044c3c5472064e69c8dc6c81a2a5dfb265a915b5cf4c013254831376b7412eeca20dd5093e45b1bde6a3cbf25cefc4411e9c8c678c2d9f0aa660d9ab6e092ce1f63974c95f7b4c9b372fb4f7f12c0e4149b9961592926cd1d20394bd3eddd88ca2cf4c717efcf1"
+    ],
+    "project": {
+      "id": "f35ea800-64d3-4dd8-99cb-601b43d672b0",
+      "name": "jebkharch",
+      "slug": "jebkharch",
+      "ownerAccount": {
+        "id": "c098b58b-8946-480a-b8df-86f42137fdda",
+        "name": "xentro_info_tech"
+      }
+    },
+    "distribution": "STORE",
+    "buildProfile": "preview",
+    "sdkVersion": "52.0.0",
+    "appVersion": "1.0.0",
+    "appBuildVersion": "1",
+    "gitCommitHash": "0e7185e3ff64284a9864c5530e6fdc6b9494bd92",
+    "gitCommitMessage": "fix: correct versions of expo packages via expo install --fix",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-21T03:08:44.162Z",
+    "updatedAt": "2026-07-21T03:13:55.545Z",
+    "completedAt": "2026-07-21T03:13:55.371Z",
+    "expirationDate": "2026-08-20T03:08:44.190Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 2968,
+      "buildQueueTime": 4981,
+      "buildDuration": 303260
+    }
+  }
+]

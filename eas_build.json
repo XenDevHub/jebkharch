@@ -1,0 +1,50 @@
+[
+  {
+    "id": "a9e52ff6-63df-4ae8-9f71-9450d57c9d11",
+    "status": "ERRORED",
+    "platform": "ANDROID",
+    "error": {
+      "errorCode": "EAS_BUILD_UNKNOWN_GRADLE_ERROR",
+      "message": "Gradle build failed with unknown error. See logs for the \"Run gradlew\" phase for more information."
+    },
+    "artifacts": {},
+    "fingerprint": {
+      "id": "019f829d-9939-7bf6-a842-8c2a9d56324d",
+      "hash": "ec4e54472f359df4798a8d3dbec7baeb3f05c992"
+    },
+    "initiatingActor": {
+      "id": "8732fce4-d71d-4724-987e-b9409db27880",
+      "displayName": "xentro_info_tech"
+    },
+    "logFiles": [
+      "https://storage.googleapis.com/eas-workflows-production/logs/f35ea800-64d3-4dd8-99cb-601b43d672b0/a9e52ff6-63df-4ae8-9f71-9450d57c9d11/2026-07-21T02%3A59%3A57Z-f463ca75-9f03-45ba-84b5-80cf8145097c.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260721%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260721T030026Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=6986c4a4bbd9254f69793e516fce0c1ec22261dc17d6a640ae3a9ca9e61dea6548851b84b2e3677f3a94dccfc13e3fba3c629fa847481f8a6407a9757ba90768fc632a2db12325844014c878659acd4f10270cd26917b62088fc86d41734a08878c3193e739101a1c1f8138029153652523dd5528a035f7ec71ecf9a46e27f75502e2fedb1148fbb67664cd7c731dff3e1f76e071a90254ce76761ed7587b0d44b5236d9971f6d443a186fa8b3e46c1db340c64be80ccc913545195049af4b997a5a5f8ff77fc3213bdd5dbd234ac98cdb72da63721d44752ae17da7422f1ed8c84d5d13ac8a8f9ebb74d3de16f4f153d6bcea18ea868ed6d4a3b81b466d8d88"
+    ],
+    "project": {
+      "id": "f35ea800-64d3-4dd8-99cb-601b43d672b0",
+      "name": "jebkharch",
+      "slug": "jebkharch",
+      "ownerAccount": {
+        "id": "c098b58b-8946-480a-b8df-86f42137fdda",
+        "name": "xentro_info_tech"
+      }
+    },
+    "distribution": "STORE",
+    "buildProfile": "preview",
+    "sdkVersion": "52.0.0",
+    "appVersion": "1.0.0",
+    "appBuildVersion": "1",
+    "gitCommitHash": "bbdbc3433ee95b5406f7069aa964c13bb918d30a",
+    "gitCommitMessage": "fix: remove kotlinVersion override from app.json",
+    "priority": "NORMAL",
+    "createdAt": "2026-07-21T02:59:54.261Z",
+    "updatedAt": "2026-07-21T03:02:51.989Z",
+    "completedAt": "2026-07-21T03:02:51.744Z",
+    "expirationDate": "2026-08-20T02:59:54.288Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 2859,
+      "buildQueueTime": 4497,
+      "buildDuration": 170127
+    }
+  }
+]
