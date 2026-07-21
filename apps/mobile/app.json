@@ -30,11 +30,12 @@
     "extra": {
       "API_URL": "http://109.199.122.238:3000",
       "eas": {
-        "projectId": "f35ea800-64d3-4dd8-99cb-601b43d672b0"
+        "projectId": "88009656-57c9-471b-8538-1f6ee470d82e"
       }
     },
     "plugins": [
       "expo-build-properties"
-    ]
+    ],
+    "owner": "xentroinfotechs-team1"
   }
 }
