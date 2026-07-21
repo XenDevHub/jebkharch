@@ -5,13 +5,19 @@
   },
   "build": {
     "development": {
+      "node": "20.x",
+      "pnpm": "9.x",
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
+      "node": "20.x",
+      "pnpm": "9.x",
       "distribution": "internal"
     },
     "production": {
+      "node": "20.x",
+      "pnpm": "9.x",
       "autoIncrement": true
     }
   },

@@ -4,12 +4,16 @@
   },
   "build": {
     "preview": {
+      "node": "20.x",
+      "pnpm": "9.x",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
       }
     },
     "production": {
+      "node": "20.x",
+      "pnpm": "9.x",
       "android": {
         "buildType": "app-bundle"
       }
