@@ -1,8 +1,10 @@
 {
   "expo": {
+    "owner": "xentro_infotech",
+    "slug": "jeb-kharch",
     "extra": {
       "eas": {
-        "projectId": "f35ea800-64d3-4dd8-99cb-601b43d672b0"
+        "projectId": "83ebc994-3749-416a-9a46-5ece267fa375"
       }
     },
     "android": {
