@@ -14,7 +14,11 @@
       "node": "20.19.4",
       "pnpm": "10.0.0",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
+      },
+      "env": {
+        "EAS_BUILD_NO_EXPO_GO_WARNING": "true",
+        "EXPO_PUBLIC_API_URL": "http://109.199.122.238:3000/api"
       }
     }
   },

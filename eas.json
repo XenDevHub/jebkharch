@@ -20,7 +20,8 @@
       "node": "20.15.0",
       "pnpm": "9.0.0",
       "env": {
-        "EAS_BUILD_NO_EXPO_GO_WARNING": "true"
+        "EAS_BUILD_NO_EXPO_GO_WARNING": "true",
+        "EXPO_PUBLIC_API_URL": "http://109.199.122.238:3000/api"
       }
     }
   },
