@@ -38,7 +38,8 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   title: {
     ...typography.bodyLg,
-    color: colors.onPrimary,
+    color: '#ffffff',
+    fontWeight: '600',
     textAlign: 'center',
   } as TextStyle,
 });

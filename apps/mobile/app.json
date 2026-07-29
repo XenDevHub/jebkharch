@@ -29,13 +29,20 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "API_URL": "http://109.199.122.238:3000",
+      "API_URL": "http://109.199.122.238:3000/api",
       "eas": {
         "projectId": "88009656-57c9-471b-8538-1f6ee470d82e"
       }
     },
     "plugins": [
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
       "expo-font"
     ],
     "owner": "xentroinfotechs-team1"
