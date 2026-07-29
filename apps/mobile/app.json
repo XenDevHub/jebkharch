@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Jeb Kharch",
-    "slug": "jeb-kharch",
+    "slug": "jebkharch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,7 +31,7 @@
     "extra": {
       "API_URL": "http://109.199.122.238:3000/api",
       "eas": {
-        "projectId": "83ebc994-3749-416a-9a46-5ece267fa375"
+        "projectId": "f35ea800-64d3-4dd8-99cb-601b43d672b0"
       }
     },
     "plugins": [
@@ -45,6 +45,6 @@
       ],
       "expo-font"
     ],
-    "owner": "xentro_infotech"
+    "owner": "xentro_info_tech"
   }
 }
