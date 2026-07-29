@@ -65,24 +65,130 @@ apiClient.interceptors.response.use(
 );
 
 // API Service functions wrapper
+// API Service functions wrapper
+// MOCKED FOR CLIENT DEMO
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+let mockBalance = 2500;
+let currentScore = 0;
+
 export const api = {
   auth: {
-    requestOtp: (phone: string) => apiClient.post('/auth/request-otp', { phone }),
-    verifyOtp: (phone: string, otp: string, deviceId: string) => apiClient.post('/auth/verify-otp', { phone, otp, deviceId }),
-    register: (data: any) => apiClient.post('/auth/register', data),
+    requestOtp: async (phone: string) => {
+      await delay(1000);
+      return { data: { message: 'OTP sent' } };
+    },
+    verifyOtp: async (phone: string, otp: string, deviceId: string) => {
+      await delay(1000);
+      if (otp !== '123456') { 
+        return Promise.reject({ response: { data: { message: 'Invalid OTP' } } });
+      }
+      return { 
+        data: { 
+          accessToken: 'mock_access_token_123', 
+          refreshToken: 'mock_refresh_token_123', 
+          isNewUser: false 
+        } 
+      };
+    },
+    register: async (data: any) => {
+      await delay(1000);
+      return { data: { success: true } };
+    },
   },
   user: {
-    getProfile: () => apiClient.get('/user/profile'),
-    getLeaderboard: () => apiClient.get('/user/leaderboard'),
+    getProfile: async () => {
+      await delay(500);
+      return { data: { name: 'Client Demo', phone: '03000000000' } };
+    },
+    getLeaderboard: async () => {
+      await delay(500);
+      return { 
+        data: [
+          { rank: 1, name: 'Shahzaib K.', score: 14200, avatar: '👑', isCurrentUser: false },
+          { rank: 2, name: 'Hamza Malik', score: 12850, avatar: '🥈', isCurrentUser: false },
+          { rank: 3, name: 'Ali Raza', score: 11400, avatar: '🥉', isCurrentUser: false },
+          { rank: 4, name: 'Tariq J.', score: 9800, avatar: '⚡', isCurrentUser: false },
+          { rank: 5, name: 'Zohaib Ahmed', score: 8550, avatar: '🔥', isCurrentUser: false },
+          { rank: 14, name: 'You (Riduan)', score: 3250, avatar: '🎮', isCurrentUser: true },
+        ] 
+      };
+    },
   },
   quiz: {
-    getCategories: () => apiClient.get('/quiz/categories'),
-    startSession: (categoryId: string) => apiClient.post('/quiz/start', { categoryId }),
-    submitAnswer: (sessionId: string, questionId: string, answerId: string) => apiClient.post('/quiz/answer', { sessionId, questionId, answerId }),
-    completeSession: (sessionId: string) => apiClient.post('/quiz/complete', { sessionId }),
+    getCategories: async () => {
+      await delay(500);
+      return { 
+        data: [
+          { id: '1', name: 'General Knowledge', icon: 'earth', isPremium: false },
+          { id: '2', name: 'Science', icon: 'flask', isPremium: false },
+          { id: '3', name: 'History', icon: 'book', isPremium: false },
+          { id: '4', name: 'Sports', icon: 'football', isPremium: false },
+          { id: '5', name: 'Technology', icon: 'hardware-chip', isPremium: true },
+        ] 
+      };
+    },
+    startSession: async (categoryId: string) => {
+      await delay(500);
+      currentScore = 0;
+      return { 
+        data: { 
+          sessionId: 'session_123',
+          questions: [
+            { id: 'q1', text: 'Which planet is known as the Red Planet?', options: [{id: 'o1', text: 'Earth'}, {id: 'o2', text: 'Mars'}, {id: 'o3', text: 'Jupiter'}, {id: 'o4', text: 'Venus'}] },
+            { id: 'q2', text: 'What is the largest ocean on Earth?', options: [{id: 'o1', text: 'Atlantic'}, {id: 'o2', text: 'Indian'}, {id: 'o3', text: 'Arctic'}, {id: 'o4', text: 'Pacific'}] },
+            { id: 'q3', text: 'What is the capital of Japan?', options: [{id: 'o1', text: 'Seoul'}, {id: 'o2', text: 'Beijing'}, {id: 'o3', text: 'Tokyo'}, {id: 'o4', text: 'Bangkok'}] },
+          ]
+        } 
+      };
+    },
+    submitAnswer: async (sessionId: string, questionId: string, answerId: string) => {
+      await delay(200);
+      // Hardcode correct answers for mock: q1=o2, q2=o4, q3=o3
+      const isCorrect = 
+        (questionId === 'q1' && answerId === 'o2') ||
+        (questionId === 'q2' && answerId === 'o4') ||
+        (questionId === 'q3' && answerId === 'o3');
+        
+      if (isCorrect) currentScore++;
+      
+      return { data: { correct: isCorrect } };
+    },
+    completeSession: async (sessionId: string) => {
+      await delay(1000);
+      const coinsEarned = currentScore * 10;
+      mockBalance += coinsEarned;
+      return { data: { score: currentScore, total: 3, coinsEarned } };
+    },
   },
   wallet: {
-    getBalance: () => apiClient.get('/wallet/balance'),
-    requestWithdrawal: (amount: number, easypaisaNumber: string) => apiClient.post('/wallet/withdraw', { amount, easypaisaNumber }),
+    getBalance: async () => {
+      await delay(500);
+      return { data: { balance: mockBalance } };
+    },
+    requestWithdrawal: async (amount: number, easypaisaNumber: string) => {
+      await delay(1500);
+      if (amount > mockBalance) {
+        return Promise.reject({ response: { data: { message: 'Insufficient balance' } } });
+      }
+      mockBalance -= amount;
+      mockWithdrawals.unshift({
+        id: `tx_${Date.now()}`,
+        amount,
+        account: easypaisaNumber,
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
+      });
+      return { data: { success: true, newBalance: mockBalance } };
+    },
+    getWithdrawalHistory: async () => {
+      await delay(500);
+      return { data: mockWithdrawals };
+    },
   },
 };
+
+const mockWithdrawals: Array<{ id: string; amount: number; account: string; status: string; createdAt: string }> = [
+  { id: 'tx_101', amount: 500, account: '03001234567', status: 'COMPLETED', createdAt: '2026-07-28T10:15:00Z' },
+  { id: 'tx_102', amount: 1000, account: '03001234567', status: 'COMPLETED', createdAt: '2026-07-25T14:30:00Z' },
+];

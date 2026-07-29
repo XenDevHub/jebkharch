@@ -23,8 +23,8 @@ export const spacing = {
 };
 
 export const typography = {
-  displayLg: {fontFamily: 'Sora', fontSize: 40, fontWeight: '700', lineHeight: 48},
-  headlineMd: {fontFamily: 'Sora', fontSize: 24, fontWeight: '600', lineHeight: 32},
-  bodyLg: {fontFamily: 'Inter', fontSize: 18, fontWeight: '400', lineHeight: 28},
-  labelMd: {fontFamily: 'Inter', fontSize: 14, fontWeight: '600', lineHeight: 20},
+  displayLg: {fontFamily: 'Sora_700Bold', fontSize: 40, fontWeight: '700' as const, lineHeight: 48},
+  headlineMd: {fontFamily: 'Sora_600SemiBold', fontSize: 24, fontWeight: '600' as const, lineHeight: 32},
+  bodyLg: {fontFamily: 'Inter_400Regular', fontSize: 18, fontWeight: '400' as const, lineHeight: 28},
+  labelMd: {fontFamily: 'Inter_600SemiBold', fontSize: 14, fontWeight: '600' as const, lineHeight: 20},
 };
