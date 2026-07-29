@@ -1,13 +1,16 @@
 // src/screens/ProfileScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, typography, spacing } from '../theme/designSystem';
+import { colors, typography, spacing, borderRadius } from '../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../api/client';
+import BottomNav from '../components/BottomNav';
+import AnimatedNumber from '../components/AnimatedNumber';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Profile'>;
@@ -37,15 +40,15 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to log out?',
+      'Log Out',
+      'Are you sure you want to log out from Jeb Kharch?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Logout',
+          text: 'Log Out',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.multiRemove(['auth_token', 'user_phone']);
+            await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user_phone', 'hasSeenOnboarding']);
             navigation.reset({
               index: 0,
               routes: [{ name: 'PhoneAuth' }],
@@ -58,107 +61,113 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={['#070d1a', '#0a1728', '#070d1a']} style={StyleSheet.absoluteFill} />
+
       {/* Header */}
-      <View style={styles.header}>
+      <Animated.View entering={FadeInDown.delay(50)} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+        <Text style={styles.headerTitle}>My Profile</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutHeaderBtn}>
+          <Ionicons name="log-out-outline" size={20} color={colors.error} />
+        </TouchableOpacity>
+      </Animated.View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Card */}
-        <LinearGradient
-          colors={[colors.primary, '#006b4b']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.profileCard}
-        >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{phone ? phone.slice(-2) : 'U'}</Text>
-          </View>
-          <Text style={styles.userName}>Player</Text>
-          <Text style={styles.userPhone}>{phone || 'User'}</Text>
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <LinearGradient
+            colors={[colors.primaryDim, '#004d35', '#002a1e']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.profileCard}
+          >
+            <View style={styles.avatarGlowRing}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{phone ? phone.slice(-2) : 'P'}</Text>
+              </View>
+            </View>
+            <Text style={styles.userName}>Player</Text>
+            <Text style={styles.userPhone}>{phone || '+92 300 0000000'}</Text>
 
-          <View style={styles.balanceBadge}>
-            <Ionicons name="star" size={18} color={colors.secondary} />
-            <Text style={styles.balanceText}>{balance} Coins</Text>
-          </View>
-        </LinearGradient>
+            <View style={styles.balanceBadge}>
+              <Ionicons name="star" size={16} color={colors.secondary} />
+              <AnimatedNumber value={balance} style={styles.balanceText} suffix=" Coins" duration={800} />
+            </View>
+          </LinearGradient>
+        </Animated.View>
 
-        {/* Quick Actions */}
-        <View style={styles.menuGroup}>
+        {/* Quick Stats */}
+        <Animated.View entering={FadeInDown.delay(150)} style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Performance Stats</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={{ fontSize: 20 }}>🏆</Text>
+              <AnimatedNumber value={12} style={styles.statValue} duration={600} />
+              <Text style={styles.statLabel}>Total Wins</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={{ fontSize: 20 }}>🎯</Text>
+              <AnimatedNumber value={45} style={styles.statValue} duration={600} />
+              <Text style={styles.statLabel}>Games Played</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={{ fontSize: 20 }}>🏅</Text>
+              <Text style={styles.statValue}>#14</Text>
+              <Text style={styles.statLabel}>Global Rank</Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Quick Menu Actions */}
+        <Animated.View entering={FadeInDown.delay(200)} style={styles.menuGroup}>
+          <Text style={styles.sectionTitle}>Account Menu</Text>
+
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Wallet')}>
             <View style={[styles.menuIconContainer, { backgroundColor: `${colors.secondary}20` }]}>
-              <Ionicons name="wallet-outline" size={22} color={colors.secondary} />
+              <Ionicons name="wallet" size={20} color={colors.secondary} />
             </View>
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuTitle}>My Wallet & Withdraw</Text>
-              <Text style={styles.menuSubtitle}>Check balance & request payout</Text>
+              <Text style={styles.menuSubtitle}>Check balance & request Easypaisa payout</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('WithdrawalHistory')}>
-            <View style={[styles.menuIconContainer, { backgroundColor: '#f59e0b20' }]}>
-              <Ionicons name="time-outline" size={22} color="#f59e0b" />
+            <View style={[styles.menuIconContainer, { backgroundColor: `${colors.primary}20` }]}>
+              <Ionicons name="time" size={20} color={colors.primary} />
             </View>
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuTitle}>Withdrawal History</Text>
               <Text style={styles.menuSubtitle}>View past payout requests and status</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Leaderboard')}>
-            <View style={[styles.menuIconContainer, { backgroundColor: '#ff475720' }]}>
-              <Ionicons name="trophy-outline" size={22} color="#ff4757" />
+            <View style={[styles.menuIconContainer, { backgroundColor: '#a78bfa20' }]}>
+              <Ionicons name="trophy" size={20} color="#a78bfa" />
             </View>
             <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Leaderboard & Ranks</Text>
-              <Text style={styles.menuSubtitle}>Check global rankings and top players</Text>
+              <Text style={styles.menuTitle}>Leaderboard & Rankings</Text>
+              <Text style={styles.menuSubtitle}>Check top players and your rank</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Home')}>
-            <View style={[styles.menuIconContainer, { backgroundColor: `${colors.primary}20` }]}>
-              <Ionicons name="game-controller-outline" size={22} color={colors.primary} />
-            </View>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Play Games</Text>
-              <Text style={styles.menuSubtitle}>Browse all active quiz categories</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.sectionTitle}>Performance Stats</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Total Wins</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>45</Text>
-              <Text style={styles.statLabel}>Games Played</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>#14</Text>
-              <Text style={styles.statLabel}>Global Rank</Text>
-            </View>
-          </View>
-        </View>
+        </Animated.View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#ff4757" />
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+        <Animated.View entering={FadeInDown.delay(250)}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color={colors.error} />
+            <Text style={styles.logoutText}>Log Out Account</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
+
+      <BottomNav active="Profile" navigation={navigation} />
     </View>
   );
 }
@@ -172,86 +181,111 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl * 2,
     paddingBottom: spacing.md,
   },
   backBtn: {
-    padding: spacing.sm,
-    backgroundColor: `${colors.surfaceVariant}50`,
+    width: 40,
+    height: 40,
     borderRadius: 12,
+    backgroundColor: colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headlineMd,
-    color: '#fff',
+    ...typography.headlineSm,
+    color: colors.white,
+  },
+  logoutHeaderBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: `${colors.error}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: `${colors.error}30`,
   },
   content: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xl * 2,
+    padding: spacing.lg,
+    paddingBottom: 110,
+    gap: spacing.lg,
   },
   profileCard: {
     alignItems: 'center',
     padding: spacing.xl,
-    borderRadius: 24,
-    marginBottom: spacing.xl,
+    borderRadius: borderRadius.xxl,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  avatarGlowRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: `${colors.primary}25`,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
-    borderWidth: 2,
-    borderColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  avatar: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarText: {
-    ...typography.displayLg,
-    fontSize: 28,
-    color: '#fff',
+    ...typography.headlineSm,
+    fontSize: 24,
+    color: colors.primary,
   },
   userName: {
-    ...typography.headlineMd,
-    color: '#fff',
-    fontSize: 22,
+    ...typography.headlineSm,
+    color: colors.white,
+    fontSize: 20,
   },
   userPhone: {
-    ...typography.bodyLg,
+    ...typography.bodyMd,
     color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
     marginBottom: spacing.md,
   },
   balanceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: borderRadius.pill,
     gap: 8,
+    borderWidth: 1,
+    borderColor: `${colors.secondary}40`,
   },
   balanceText: {
     ...typography.labelMd,
     color: colors.secondary,
-    fontSize: 16,
+    fontSize: 15,
   },
   menuGroup: {
     gap: spacing.sm,
-    marginBottom: spacing.xl,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${colors.surfaceVariant}40`,
+    backgroundColor: colors.surfaceCard,
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: `${colors.onSurface}10`,
+    borderColor: colors.glassBorder,
   },
   menuIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -261,22 +295,22 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     ...typography.labelMd,
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 15,
+    color: colors.white,
   },
   menuSubtitle: {
-    ...typography.bodyLg,
+    ...typography.bodyMd,
     fontSize: 12,
     color: colors.onSurfaceVariant,
   },
   statsContainer: {
-    marginBottom: spacing.xl,
+    gap: spacing.xs,
   },
   sectionTitle: {
-    ...typography.headlineMd,
-    fontSize: 18,
-    color: '#fff',
-    marginBottom: spacing.md,
+    ...typography.headlineSm,
+    fontSize: 16,
+    color: colors.white,
+    marginBottom: spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
@@ -284,38 +318,38 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: `${colors.surfaceVariant}40`,
+    backgroundColor: colors.surfaceCard,
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: `${colors.onSurface}10`,
+    borderColor: colors.glassBorder,
+    gap: 4,
   },
   statValue: {
-    ...typography.headlineMd,
-    fontSize: 20,
-    color: '#fff',
+    ...typography.headlineSm,
+    fontSize: 18,
+    color: colors.white,
   },
   statLabel: {
-    ...typography.bodyLg,
-    fontSize: 11,
+    ...typography.labelSm,
+    fontSize: 10,
     color: colors.onSurfaceVariant,
-    marginTop: 4,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ff475715',
+    backgroundColor: `${colors.error}15`,
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: borderRadius.pill,
     borderWidth: 1,
-    borderColor: '#ff475740',
+    borderColor: `${colors.error}40`,
     gap: 8,
   },
   logoutText: {
     ...typography.labelMd,
-    color: '#ff4757',
-    fontSize: 16,
+    color: colors.error,
+    fontSize: 15,
   },
 });

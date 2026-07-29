@@ -1,12 +1,14 @@
 // src/screens/LeaderboardScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, typography, spacing } from '../theme/designSystem';
+import { colors, typography, spacing, borderRadius } from '../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../api/client';
+import BottomNav from '../components/BottomNav';
 
 type LeaderboardItem = {
   rank: number;
@@ -19,6 +21,24 @@ type LeaderboardItem = {
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Leaderboard'>;
 };
+
+function PodiumBlock({ height, color, rank, label }: { height: number; color: string; rank: string; label?: string }) {
+  const hAnim = useSharedValue(0);
+
+  useEffect(() => {
+    hAnim.value = withSpring(height, { damping: 14, stiffness: 90 });
+  }, [height]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    height: hAnim.value,
+  }));
+
+  return (
+    <Animated.View style={[styles.podiumBlock, { backgroundColor: color }, animStyle]}>
+      <Text style={styles.podiumRank}>{rank}</Text>
+    </Animated.View>
+  );
+}
 
 export default function LeaderboardScreen({ navigation }: Props) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
@@ -51,30 +71,38 @@ export default function LeaderboardScreen({ navigation }: Props) {
   const top3 = leaderboard.slice(0, 3);
   const remaining = leaderboard.slice(3);
 
-  const renderItem = ({ item }: { item: LeaderboardItem }) => (
-    <View style={[styles.rankItem, item.isCurrentUser && styles.currentUserRank]}>
-      <Text style={styles.rankNumber}>#{item.rank}</Text>
-      <Text style={styles.avatarIcon}>{item.avatar}</Text>
-      <Text style={[styles.playerName, item.isCurrentUser && styles.currentUserName]}>
-        {item.name}
-      </Text>
-      <View style={styles.scoreContainer}>
-        <Ionicons name="star" size={14} color={colors.secondary} />
-        <Text style={styles.playerScore}>{item.score.toLocaleString()} pts</Text>
+  const renderItem = ({ item, index }: { item: LeaderboardItem; index: number }) => (
+    <Animated.View entering={FadeInDown.delay(index * 40).springify().damping(15)}>
+      <View style={[styles.rankItem, item.isCurrentUser && styles.currentUserRank]}>
+        <Text style={[styles.rankNumber, item.rank <= 3 && { color: colors.secondary }]}>
+          #{item.rank}
+        </Text>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarIcon}>{item.avatar || '👤'}</Text>
+        </View>
+        <Text style={[styles.playerName, item.isCurrentUser && styles.currentUserName]} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <View style={styles.scoreContainer}>
+          <Ionicons name="star" size={14} color={colors.secondary} />
+          <Text style={styles.playerScore}>{item.score.toLocaleString()} pts</Text>
+        </View>
       </View>
-    </View>
+    </Animated.View>
   );
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={['#070d1a', '#0d162a', '#070d1a']} style={StyleSheet.absoluteFill} />
+
       {/* Header */}
-      <View style={styles.header}>
+      <Animated.View entering={FadeInDown.delay(50)} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Leaderboard</Text>
         <View style={{ width: 40 }} />
-      </View>
+      </Animated.View>
 
       {loading ? (
         <View style={styles.centerContainer}>
@@ -90,57 +118,61 @@ export default function LeaderboardScreen({ navigation }: Props) {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListHeaderComponent={
-            <View>
+            <Animated.View entering={FadeInDown.delay(100)}>
               {/* Podium Header for Top 3 */}
               <LinearGradient
-                colors={[colors.primary, '#006b4b']}
+                colors={[colors.primaryDim, '#004d35', '#002a1e']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.podiumCard}
               >
                 <Text style={styles.podiumTitle}>Top Quiz Masters 🏆</Text>
-                
+
                 <View style={styles.podiumRow}>
+                  {/* #2 Player */}
                   {top3[1] && (
                     <View style={styles.podiumItem}>
-                      <Text style={styles.podiumAvatar}>{top3[1].avatar}</Text>
+                      <Text style={styles.podiumAvatar}>{top3[1].avatar || '🥈'}</Text>
                       <Text style={styles.podiumName} numberOfLines={1}>{top3[1].name}</Text>
-                      <Text style={styles.podiumScore}>{top3[1].score}</Text>
-                      <View style={[styles.podiumBlock, { height: 60, backgroundColor: '#94a3b8' }]}>
-                        <Text style={styles.podiumRank}>#2</Text>
-                      </View>
+                      <Text style={styles.podiumScore}>{top3[1].score} pts</Text>
+                      <PodiumBlock height={65} color={colors.silver} rank="#2" />
                     </View>
                   )}
 
+                  {/* #1 Player */}
                   {top3[0] && (
                     <View style={styles.podiumItem}>
-                      <Text style={[styles.podiumAvatar, { fontSize: 40 }]}>{top3[0].avatar}</Text>
-                      <Text style={[styles.podiumName, { fontWeight: '700' }]} numberOfLines={1}>{top3[0].name}</Text>
-                      <Text style={styles.podiumScore}>{top3[0].score}</Text>
-                      <View style={[styles.podiumBlock, { height: 80, backgroundColor: colors.secondary }]}>
-                        <Text style={styles.podiumRank}>#1</Text>
+                      <View style={styles.crownBadge}>
+                        <Text style={{ fontSize: 20 }}>👑</Text>
                       </View>
+                      <Text style={[styles.podiumAvatar, { fontSize: 38 }]}>{top3[0].avatar || '🥇'}</Text>
+                      <Text style={[styles.podiumName, { fontWeight: '700', color: colors.secondary }]} numberOfLines={1}>
+                        {top3[0].name}
+                      </Text>
+                      <Text style={[styles.podiumScore, { color: colors.white }]}>{top3[0].score} pts</Text>
+                      <PodiumBlock height={90} color={colors.gold} rank="#1" />
                     </View>
                   )}
 
+                  {/* #3 Player */}
                   {top3[2] && (
                     <View style={styles.podiumItem}>
-                      <Text style={styles.podiumAvatar}>{top3[2].avatar}</Text>
+                      <Text style={styles.podiumAvatar}>{top3[2].avatar || '🥉'}</Text>
                       <Text style={styles.podiumName} numberOfLines={1}>{top3[2].name}</Text>
-                      <Text style={styles.podiumScore}>{top3[2].score}</Text>
-                      <View style={[styles.podiumBlock, { height: 45, backgroundColor: '#b45309' }]}>
-                        <Text style={styles.podiumRank}>#3</Text>
-                      </View>
+                      <Text style={styles.podiumScore}>{top3[2].score} pts</Text>
+                      <PodiumBlock height={50} color={colors.bronze} rank="#3" />
                     </View>
                   )}
                 </View>
               </LinearGradient>
 
               <Text style={styles.sectionHeaderTitle}>Global Rankings</Text>
-            </View>
+            </Animated.View>
           }
         />
       )}
+
+      <BottomNav active="Leaderboard" navigation={navigation} />
     </View>
   );
 }
@@ -154,18 +186,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl * 2,
     paddingBottom: spacing.md,
   },
   backBtn: {
-    padding: spacing.sm,
-    backgroundColor: `${colors.surfaceVariant}50`,
+    width: 40,
+    height: 40,
     borderRadius: 12,
+    backgroundColor: colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    ...typography.headlineMd,
-    color: '#fff',
+    ...typography.headlineSm,
+    color: colors.white,
   },
   centerContainer: {
     flex: 1,
@@ -173,93 +208,111 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xl * 2,
+    padding: spacing.lg,
+    paddingBottom: 100,
   },
   podiumCard: {
     padding: spacing.lg,
-    borderRadius: 24,
-    marginBottom: spacing.xl,
+    borderRadius: borderRadius.xxl,
+    marginBottom: spacing.lg,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    overflow: 'hidden',
   },
   podiumTitle: {
-    ...typography.headlineMd,
-    color: '#fff',
+    ...typography.headlineSm,
+    color: colors.white,
     fontSize: 18,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   podiumRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     width: '100%',
   },
   podiumItem: {
     flex: 1,
     alignItems: 'center',
+    position: 'relative',
+  },
+  crownBadge: {
+    position: 'absolute',
+    top: -24,
+    zIndex: 10,
   },
   podiumAvatar: {
     fontSize: 32,
     marginBottom: 4,
   },
   podiumName: {
-    ...typography.labelMd,
+    ...typography.labelSm,
     fontSize: 12,
-    color: '#fff',
+    color: colors.white,
     textAlign: 'center',
+    width: '100%',
   },
   podiumScore: {
-    ...typography.bodyLg,
+    ...typography.labelSm,
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 6,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginBottom: 8,
   },
   podiumBlock: {
     width: '100%',
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
   podiumRank: {
-    ...typography.headlineMd,
+    ...typography.headlineSm,
     fontSize: 18,
-    color: '#fff',
+    color: colors.onPrimary,
   },
   sectionHeaderTitle: {
-    ...typography.headlineMd,
-    fontSize: 18,
-    color: '#fff',
+    ...typography.headlineSm,
+    fontSize: 16,
+    color: colors.white,
     marginBottom: spacing.md,
   },
   rankItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${colors.surfaceVariant}40`,
+    backgroundColor: colors.surfaceCard,
     padding: spacing.md,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: `${colors.onSurface}10`,
+    borderColor: colors.glassBorder,
   },
   currentUserRank: {
-    backgroundColor: `${colors.primary}25`,
+    backgroundColor: `${colors.primary}20`,
     borderColor: colors.primary,
   },
   rankNumber: {
     ...typography.labelMd,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.onSurfaceVariant,
     width: 36,
   },
-  avatarIcon: {
-    fontSize: 20,
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: spacing.sm,
+  },
+  avatarIcon: {
+    fontSize: 18,
   },
   playerName: {
     ...typography.labelMd,
-    fontSize: 15,
-    color: '#fff',
+    fontSize: 14,
+    color: colors.white,
     flex: 1,
   },
   currentUserName: {
@@ -273,10 +326,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: borderRadius.pill,
   },
   playerScore: {
-    ...typography.labelMd,
+    ...typography.labelSm,
     fontSize: 12,
     color: colors.secondary,
   },
