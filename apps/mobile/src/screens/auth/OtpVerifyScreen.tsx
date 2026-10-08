@@ -23,12 +23,12 @@ const OTP_LENGTH = 6;
 
 export default function OtpVerifyScreen({ route, navigation }: Props) {
   const { phone } = route.params;
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [otpText, setOtpText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(60);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const inputRefs = useRef<(TextInput | null)[]>(Array(OTP_LENGTH).fill(null));
+  const [isFocused, setIsFocused] = useState(false);
+  const hiddenInputRef = useRef<TextInput>(null);
 
   const shakeAnim = useSharedValue(0);
   const successScale = useSharedValue(1);
@@ -41,10 +41,10 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
 
   // Auto-submit when all digits are filled
   useEffect(() => {
-    if (otp.every(d => d !== '') && !loading) {
-      handleVerify(otp.join(''));
+    if (otpText.length === OTP_LENGTH && !loading) {
+      handleVerify(otpText);
     }
-  }, [otp]);
+  }, [otpText]);
 
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeAnim.value }],
@@ -77,39 +77,23 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
     } catch (err: any) {
       setError(err.response?.data?.message || 'OTP galat hai, dobara try karo');
       triggerShake();
-      setOtp(Array(OTP_LENGTH).fill(''));
-      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      setOtpText('');
+      setTimeout(() => hiddenInputRef.current?.focus(), 100);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangeText = (text: string, index: number) => {
-    const digit = text.replace(/[^0-9]/g, '').slice(-1);
-    const newOtp = [...otp];
-    newOtp[index] = digit;
-    setOtp(newOtp);
+  const handleOtpChange = (text: string) => {
+    const cleanText = text.replace(/[^0-9]/g, '').slice(0, OTP_LENGTH);
+    setOtpText(cleanText);
     setError('');
-    if (digit && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-      setFocusedIndex(index + 1);
-    }
-  };
-
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !otp[index] && index > 0) {
-      const newOtp = [...otp];
-      newOtp[index - 1] = '';
-      setOtp(newOtp);
-      inputRefs.current[index - 1]?.focus();
-      setFocusedIndex(index - 1);
-    }
   };
 
   const handleResend = async () => {
     if (countdown > 0) return;
     setCountdown(60);
-    setOtp(Array(OTP_LENGTH).fill(''));
+    setOtpText('');
     setError('');
     try {
       await api.auth.requestOtp(phone);
@@ -154,39 +138,55 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
           </Text>
         </Animated.View>
 
-        {/* OTP Boxes */}
-        <Animated.View
-          entering={FadeInUp.delay(300).springify().damping(16)}
-          style={[styles.otpRow, shakeStyle]}
+        {/* Hidden TextInput for native keyboard handling */}
+        <TextInput
+          ref={hiddenInputRef}
+          style={styles.hiddenInput}
+          value={otpText}
+          onChangeText={handleOtpChange}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          keyboardType="number-pad"
+          maxLength={OTP_LENGTH}
+          autoFocus
+          caretHidden
+          secureTextEntry={false}
+        />
+
+        {/* Visual OTP Boxes */}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => hiddenInputRef.current?.focus()}
         >
-          {otp.map((digit, index) => {
-            const isFocused = focusedIndex === index;
-            const isFilled = digit !== '';
-            return (
-              <View key={index} style={styles.otpBoxWrapper}>
-                {isFocused && <View style={styles.otpFocusBg} />}
-                <TextInput
-                  ref={(ref) => { inputRefs.current[index] = ref; }}
-                  style={[
-                    styles.otpBox,
-                    isFocused && styles.otpBoxFocused,
-                    isFilled && styles.otpBoxFilled,
-                    error ? styles.otpBoxError : {},
-                  ]}
-                  value={digit}
-                  onChangeText={(t) => handleChangeText(t, index)}
-                  onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                  onFocus={() => setFocusedIndex(index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  textAlign="center"
-                  selectionColor={colors.primary}
-                  caretHidden
-                />
-              </View>
-            );
-          })}
-        </Animated.View>
+          <Animated.View
+            entering={FadeInUp.delay(300).springify().damping(16)}
+            style={[styles.otpRow, shakeStyle]}
+          >
+            {Array(OTP_LENGTH)
+              .fill(0)
+              .map((_, index) => {
+                const digit = otpText[index] || '';
+                const isCurrentFocused = isFocused && (otpText.length === index || (otpText.length === OTP_LENGTH && index === OTP_LENGTH - 1));
+                const isFilled = digit !== '';
+                return (
+                  <View key={index} style={styles.otpBoxWrapper}>
+                    {isCurrentFocused && <View style={styles.otpFocusBg} />}
+                    <View
+                      style={[
+                        styles.otpBox,
+                        isCurrentFocused && styles.otpBoxFocused,
+                        isFilled && styles.otpBoxFilled,
+                        error ? styles.otpBoxError : {},
+                        { justifyContent: 'center', alignItems: 'center' },
+                      ]}
+                    >
+                      <Text style={styles.otpBoxText}>{digit}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+          </Animated.View>
+        </TouchableOpacity>
 
         {/* Error */}
         {error ? (
@@ -198,13 +198,13 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
         {/* Verify button */}
         <Animated.View entering={FadeInUp.delay(400)} style={styles.btnWrapper}>
           <TouchableOpacity
-            onPress={() => handleVerify(otp.join(''))}
-            disabled={otp.some(d => d === '') || loading}
+            onPress={() => handleVerify(otpText)}
+            disabled={otpText.length < OTP_LENGTH || loading}
             activeOpacity={0.85}
           >
             <LinearGradient
               colors={
-                otp.every(d => d !== '')
+                otpText.length === OTP_LENGTH
                   ? [colors.primary, colors.primaryDim]
                   : [`${colors.primary}40`, `${colors.primaryDim}40`]
               }
@@ -278,6 +278,8 @@ const styles = StyleSheet.create({
     width: BOX_SIZE, height: BOX_SIZE + 10, borderRadius: 12,
     backgroundColor: colors.surfaceVariant,
     borderWidth: 1.5, borderColor: colors.glassBorder,
+  },
+  otpBoxText: {
     ...typography.headlineMd, fontSize: 22, color: colors.white,
     textAlign: 'center',
   },
@@ -289,6 +291,12 @@ const styles = StyleSheet.create({
     borderColor: `${colors.primary}80`,
   },
   otpBoxError: { borderColor: colors.error },
+  hiddenInput: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
   errorText: {
     ...typography.labelSm, color: colors.error,
     textAlign: 'center', marginTop: -spacing.sm,

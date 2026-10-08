@@ -65,127 +65,178 @@ apiClient.interceptors.response.use(
 );
 
 // API Service functions wrapper
-// API Service functions wrapper
-// MOCKED FOR CLIENT DEMO
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-let mockBalance = 2500;
-let currentScore = 0;
-
 export const api = {
   auth: {
     requestOtp: async (phone: string) => {
-      await delay(1000);
-      return { data: { message: 'OTP sent' } };
+      return apiClient.post('/auth/send-otp', { phone, purpose: 'LOGIN' });
     },
     verifyOtp: async (phone: string, otp: string, deviceId: string) => {
-      await delay(1000);
-      if (otp !== '123456') { 
-        return Promise.reject({ response: { data: { message: 'Invalid OTP' } } });
+      try {
+        const loginRes = await apiClient.post('/auth/login', {
+          phone,
+          otpCode: otp,
+          deviceId,
+          platform: 'android',
+          deviceModel: 'Android SDK built for x86'
+        });
+        return loginRes;
+      } catch (err: any) {
+        const isNotRegistered =
+          err.response?.status === 401 ||
+          err.response?.data?.message?.toLowerCase().includes('not found') ||
+          err.response?.data?.message?.toLowerCase().includes('register');
+
+        if (isNotRegistered) {
+          await apiClient.post('/auth/verify-otp', {
+            phone,
+            otpCode: otp,
+            purpose: 'LOGIN'
+          });
+          await apiClient.post('/auth/create-profile', {
+            phone,
+            name: `Player ${phone.slice(-4)}`,
+            deviceId,
+            platform: 'android',
+            deviceModel: 'Android SDK built for x86'
+          });
+          return apiClient.post('/auth/login', {
+            phone,
+            otpCode: otp,
+            deviceId,
+            platform: 'android',
+            deviceModel: 'Android SDK built for x86'
+          });
+        }
+        throw err;
       }
-      return { 
-        data: { 
-          accessToken: 'mock_access_token_123', 
-          refreshToken: 'mock_refresh_token_123', 
-          isNewUser: false 
-        } 
-      };
     },
     register: async (data: any) => {
-      await delay(1000);
-      return { data: { success: true } };
+      return apiClient.post('/auth/create-profile', data);
     },
   },
   user: {
     getProfile: async () => {
-      await delay(500);
-      return { data: { name: 'Client Demo', phone: '03000000000' } };
+      return apiClient.get('/user/profile');
+    },
+    updateProfile: async (updates: { name: string; email?: string; dob?: string; easypaisaNumber?: string }) => {
+      return apiClient.patch('/user/update', updates);
     },
     getLeaderboard: async () => {
-      await delay(500);
-      return { 
-        data: [
-          { rank: 1, name: 'Shahzaib K.', score: 14200, avatar: '👑', isCurrentUser: false },
-          { rank: 2, name: 'Hamza Malik', score: 12850, avatar: '🥈', isCurrentUser: false },
-          { rank: 3, name: 'Ali Raza', score: 11400, avatar: '🥉', isCurrentUser: false },
-          { rank: 4, name: 'Tariq J.', score: 9800, avatar: '⚡', isCurrentUser: false },
-          { rank: 5, name: 'Zohaib Ahmed', score: 8550, avatar: '🔥', isCurrentUser: false },
-          { rank: 14, name: 'You (Riduan)', score: 3250, avatar: '🎮', isCurrentUser: true },
-        ] 
-      };
+      const storedPhone = await AsyncStorage.getItem('user_phone');
+      const res = await apiClient.get('/user/leaderboard');
+      const mappedData = res.data.data.map((item: any) => ({
+        rank: item.position,
+        name: item.name || `Player ${item.phone?.slice(-4) || ''}`,
+        score: item.xp,
+        avatar: item.avatarUrl || '👤',
+        isCurrentUser: item.phone === storedPhone,
+      }));
+      return { data: mappedData };
     },
   },
   quiz: {
     getCategories: async () => {
-      await delay(500);
-      return { 
-        data: [
-          { id: '1', name: 'General Knowledge', icon: 'earth', isPremium: false },
-          { id: '2', name: 'Science', icon: 'flask', isPremium: false },
-          { id: '3', name: 'History', icon: 'book', isPremium: false },
-          { id: '4', name: 'Sports', icon: 'football', isPremium: false },
-          { id: '5', name: 'Technology', icon: 'hardware-chip', isPremium: true },
-        ] 
-      };
+      return apiClient.get('/quiz/categories');
     },
     startSession: async (categoryId: string) => {
-      await delay(500);
-      currentScore = 0;
-      return { 
-        data: { 
-          sessionId: 'session_123',
-          questions: [
-            { id: 'q1', text: 'Which planet is known as the Red Planet?', options: [{id: 'o1', text: 'Earth'}, {id: 'o2', text: 'Mars'}, {id: 'o3', text: 'Jupiter'}, {id: 'o4', text: 'Venus'}] },
-            { id: 'q2', text: 'What is the largest ocean on Earth?', options: [{id: 'o1', text: 'Atlantic'}, {id: 'o2', text: 'Indian'}, {id: 'o3', text: 'Arctic'}, {id: 'o4', text: 'Pacific'}] },
-            { id: 'q3', text: 'What is the capital of Japan?', options: [{id: 'o1', text: 'Seoul'}, {id: 'o2', text: 'Beijing'}, {id: 'o3', text: 'Tokyo'}, {id: 'o4', text: 'Bangkok'}] },
-          ]
-        } 
+      const res = await apiClient.post('/quiz/start', { categoryId });
+      const mappedQuestions = res.data.questions.map((q: any) => ({
+        id: q.id,
+        text: q.questionText,
+        options: [
+          { id: 'A', text: q.optionA },
+          { id: 'B', text: q.optionB },
+          { id: 'C', text: q.optionC },
+          { id: 'D', text: q.optionD },
+        ]
+      }));
+      return {
+        data: {
+          sessionId: res.data.sessionId,
+          questions: mappedQuestions
+        }
       };
     },
     submitAnswer: async (sessionId: string, questionId: string, answerId: string) => {
-      await delay(200);
-      // Hardcode correct answers for mock: q1=o2, q2=o4, q3=o3
-      const isCorrect = 
-        (questionId === 'q1' && answerId === 'o2') ||
-        (questionId === 'q2' && answerId === 'o4') ||
-        (questionId === 'q3' && answerId === 'o3');
-        
-      if (isCorrect) currentScore++;
-      
-      return { data: { correct: isCorrect } };
+      return apiClient.post('/quiz/answer', {
+        sessionId,
+        questionId,
+        selectedAnswer: answerId,
+        timeTaken: 5
+      });
     },
     completeSession: async (sessionId: string) => {
-      await delay(1000);
-      const coinsEarned = currentScore * 10;
-      mockBalance += coinsEarned;
-      return { data: { score: currentScore, total: 3, coinsEarned } };
+      const res = await apiClient.post('/quiz/finish', { sessionId });
+      return {
+        data: {
+          score: res.data.score,
+          total: res.data.totalQuestions,
+          coinsEarned: res.data.coinsWon
+        }
+      };
     },
   },
   wallet: {
     getBalance: async () => {
-      await delay(500);
-      return { data: { balance: mockBalance } };
+      const res = await apiClient.get('/wallet');
+      return {
+        data: {
+          balance: res.data.totalCoins
+        }
+      };
     },
     requestWithdrawal: async (amount: number, easypaisaNumber: string) => {
-      await delay(1500);
-      if (amount > mockBalance) {
-        return Promise.reject({ response: { data: { message: 'Insufficient balance' } } });
-      }
-      mockBalance -= amount;
-      mockWithdrawals.unshift({
-        id: `tx_${Date.now()}`,
-        amount,
-        account: easypaisaNumber,
-        status: 'PENDING',
-        createdAt: new Date().toISOString(),
-      });
-      return { data: { success: true, newBalance: mockBalance } };
+      return apiClient.post('/wallet/withdraw', { coins: amount, easypaisaNumber });
     },
     getWithdrawalHistory: async () => {
-      await delay(500);
-      return { data: mockWithdrawals };
+      const res = await apiClient.get('/wallet/withdrawals');
+      const mapped = res.data.map((w: any) => ({
+        id: w.id,
+        amount: w.coins,
+        account: w.easypaisaNumber,
+        status: w.status,
+        createdAt: w.createdAt
+      }));
+      return { data: mapped };
     },
   },
+  ads: {
+    watch: async (deviceId?: string) => {
+      return apiClient.post('/ads/watch', { adType: 'REWARDED', deviceId });
+    }
+  },
+  challenge: {
+    create: async () => {
+      return apiClient.post('/challenge/create', {});
+    },
+    join: async (inviteCode: string) => {
+      return apiClient.post('/challenge/join', { inviteCode });
+    },
+    getQuestions: async (challengeId: string) => {
+      const res = await apiClient.get(`/challenge/${challengeId}/questions`);
+      const mapped = res.data.map((q: any) => ({
+        id: q.id,
+        text: q.questionText,
+        correctAnswer: q.correctAnswer,
+        options: [
+          { id: 'A', text: q.optionA },
+          { id: 'B', text: q.optionB },
+          { id: 'C', text: q.optionC },
+          { id: 'D', text: q.optionD },
+        ]
+      }));
+      return { data: mapped };
+    },
+    submit: async (challengeId: string, score: number) => {
+      return apiClient.post('/challenge/submit', { challengeId, score });
+    },
+    getHistory: async () => {
+      return apiClient.get('/challenge/history');
+    },
+    getOne: async (challengeId: string) => {
+      return apiClient.get(`/challenge/${challengeId}`);
+    },
+  }
 };
 
 const mockWithdrawals: Array<{ id: string; amount: number; account: string; status: string; createdAt: string }> = [

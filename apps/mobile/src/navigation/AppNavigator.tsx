@@ -13,6 +13,9 @@ import WalletScreen from '../screens/wallet/WalletScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
 import WithdrawalHistoryScreen from '../screens/wallet/WithdrawalHistoryScreen';
+import ChallengeLobbyScreen from '../screens/challenge/ChallengeLobbyScreen';
+import ChallengePlayScreen from '../screens/challenge/ChallengePlayScreen';
+import ChallengeResultScreen from '../screens/challenge/ChallengeResultScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -26,6 +29,9 @@ export type RootStackParamList = {
   Profile: undefined;
   Leaderboard: undefined;
   WithdrawalHistory: undefined;
+  ChallengeLobby: undefined;
+  ChallengePlay: { challengeId: string; isCreator?: boolean };
+  ChallengeResult: { challengeId: string; myScore: number; total: number; result?: 'win' | 'lose' | 'draw' };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -45,6 +51,9 @@ export function AppNavigator() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Stack.Screen name="WithdrawalHistory" component={WithdrawalHistoryScreen} />
+        <Stack.Screen name="ChallengeLobby" component={ChallengeLobbyScreen} />
+        <Stack.Screen name="ChallengePlay" component={ChallengePlayScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="ChallengeResult" component={ChallengeResultScreen} options={{ animation: 'slide_from_bottom' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

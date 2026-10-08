@@ -1,6 +1,6 @@
 // src/screens/ProfileScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -19,6 +19,10 @@ type Props = {
 export default function ProfileScreen({ navigation }: Props) {
   const [balance, setBalance] = useState<number>(0);
   const [phone, setPhone] = useState<string>('');
+  const [profile, setProfile] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
 
   useEffect(() => {
     fetchProfileData();
@@ -29,12 +33,33 @@ export default function ProfileScreen({ navigation }: Props) {
       const storedPhone = await AsyncStorage.getItem('user_phone');
       if (storedPhone) setPhone(storedPhone);
 
-      const walletRes = await api.wallet.getBalance();
-      if (walletRes.data?.balance !== undefined) {
-        setBalance(walletRes.data.balance);
+      const profileRes = await api.user.getProfile();
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+        setEditName(profileRes.data.name || '');
+        setEditEmail(profileRes.data.email || '');
+        setBalance(profileRes.data.coins);
       }
     } catch (e) {
       console.log('Error fetching profile data', e);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Validation Error', 'Name cannot be empty 😅');
+      return;
+    }
+    try {
+      await api.user.updateProfile({
+        name: editName,
+        email: editEmail || undefined,
+      });
+      Alert.alert('Success', 'Profile updated successfully! 🎉');
+      setIsEditing(false);
+      fetchProfileData();
+    } catch (e: any) {
+      Alert.alert('Error', e.response?.data?.message || 'Update failed');
     }
   };
 
@@ -85,11 +110,51 @@ export default function ProfileScreen({ navigation }: Props) {
           >
             <View style={styles.avatarGlowRing}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{phone ? phone.slice(-2) : 'P'}</Text>
+                <Text style={styles.avatarText}>
+                  {editName ? editName.charAt(0).toUpperCase() : 'P'}
+                </Text>
               </View>
             </View>
-            <Text style={styles.userName}>Player</Text>
-            <Text style={styles.userPhone}>{phone || '+92 300 0000000'}</Text>
+
+            {isEditing ? (
+              <View style={styles.editForm}>
+                <TextInput
+                  style={styles.editInput}
+                  placeholder="Enter Name"
+                  placeholderTextColor={colors.onSurfaceMuted}
+                  value={editName}
+                  onChangeText={setEditName}
+                />
+                <TextInput
+                  style={styles.editInput}
+                  placeholder="Enter Email (Optional)"
+                  placeholderTextColor={colors.onSurfaceMuted}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <View style={styles.editBtnRow}>
+                  <TouchableOpacity style={styles.editCancelBtn} onPress={() => setIsEditing(false)}>
+                    <Text style={styles.editCancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.editSaveBtn} onPress={handleSave}>
+                    <Text style={styles.editSaveBtnText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.userName}>{profile?.name || 'Player'}</Text>
+                  <TouchableOpacity onPress={() => setIsEditing(true)}>
+                    <Ionicons name="create-outline" size={18} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.userPhone}>{phone || '+92 300 0000000'}</Text>
+                {profile?.email ? <Text style={styles.userEmail}>{profile.email}</Text> : null}
+              </View>
+            )}
 
             <View style={styles.balanceBadge}>
               <Ionicons name="star" size={16} color={colors.secondary} />
@@ -104,18 +169,18 @@ export default function ProfileScreen({ navigation }: Props) {
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🏆</Text>
-              <AnimatedNumber value={12} style={styles.statValue} duration={600} />
-              <Text style={styles.statLabel}>Total Wins</Text>
+              <AnimatedNumber value={profile?.stats?.challengeWinRate || 0} style={styles.statValue} suffix="%" duration={600} />
+              <Text style={styles.statLabel}>Challenge Win Rate</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🎯</Text>
-              <AnimatedNumber value={45} style={styles.statValue} duration={600} />
+              <AnimatedNumber value={(profile?.stats?.totalQuizzes || 0) + (profile?.stats?.totalChallenges || 0)} style={styles.statValue} duration={600} />
               <Text style={styles.statLabel}>Games Played</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🏅</Text>
-              <Text style={styles.statValue}>#14</Text>
-              <Text style={styles.statLabel}>Global Rank</Text>
+              <AnimatedNumber value={profile?.stats?.accuracy || 0} style={styles.statValue} suffix="%" duration={600} />
+              <Text style={styles.statLabel}>Accuracy</Text>
             </View>
           </View>
         </Animated.View>
@@ -351,5 +416,52 @@ const styles = StyleSheet.create({
     ...typography.labelMd,
     color: colors.error,
     fontSize: 15,
+  },
+  userEmail: {
+    ...typography.bodyMd,
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  editForm: {
+    width: '100%',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  editInput: {
+    backgroundColor: `${colors.surfaceVariant}80`,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.white,
+    ...typography.bodyMd,
+  },
+  editBtnRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  editCancelBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.pill,
+    backgroundColor: `${colors.white}10`,
+  },
+  editCancelBtnText: {
+    ...typography.labelSm,
+    color: colors.white,
+  },
+  editSaveBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.primary,
+  },
+  editSaveBtnText: {
+    ...typography.labelSm,
+    color: colors.onPrimary,
   },
 });

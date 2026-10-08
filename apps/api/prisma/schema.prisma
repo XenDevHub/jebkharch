@@ -263,6 +263,8 @@ model Challenge {
   creatorScore  Int?
   opponentScore Int?
 
+  questionIds   String[]
+
   creator     User     @relation("ChallengeCreator", fields: [creatorId], references: [id])
   opponent    User?    @relation("ChallengeOpponent", fields: [opponentId], references: [id])
   winner      User?    @relation("ChallengeWinner", fields: [winnerId], references: [id])

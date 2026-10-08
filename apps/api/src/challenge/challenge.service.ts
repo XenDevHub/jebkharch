@@ -26,7 +26,7 @@ export class ChallengeService {
 
   // ── Create Challenge ──────────────────────────────────────────────────────
 
-  async createChallenge(creatorId: string, categoryId: string) {
+  async createChallenge(creatorId: string, categoryId?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: creatorId } });
     if (!user) throw new NotFoundException('User not found.');
 
@@ -34,8 +34,29 @@ export class ChallengeService {
       throw new BadRequestException(`Need ${COIN_CONSTANTS.CHALLENGE_ENTRY} coins to create a challenge.`);
     }
 
-    const category = await this.prisma.category.findUnique({ where: { id: categoryId } });
+    // Resolve categoryId (use default or first if not provided)
+    let finalCategoryId = categoryId;
+    if (!finalCategoryId) {
+      const firstCat = await this.prisma.category.findFirst({ where: { isActive: true } });
+      if (!firstCat) throw new NotFoundException('No active categories found.');
+      finalCategoryId = firstCat.id;
+    }
+
+    const category = await this.prisma.category.findUnique({ where: { id: finalCategoryId } });
     if (!category) throw new NotFoundException('Category not found.');
+
+    // Fetch 10 random questions from the database across all categories (mixed)
+    const questionsPool = await this.prisma.question.findMany({
+      where: { isApproved: true },
+      take: 100, // fetch a pool to randomize from
+    });
+
+    if (questionsPool.length < 10) {
+      throw new BadRequestException('Not enough questions in database to create a challenge.');
+    }
+
+    const shuffled = questionsPool.sort(() => 0.5 - Math.random()).slice(0, 10);
+    const questionIds = shuffled.map((q) => q.id);
 
     const inviteCode = this.generateInviteCode();
     const expiresAt = dayjs().add(CHALLENGE_LOBBY_EXPIRY_MINUTES, 'minute').toDate();
@@ -65,11 +86,12 @@ export class ChallengeService {
         data: {
           id: uuidv4(),
           creatorId,
-          categoryId,
+          categoryId: finalCategoryId!,
           potAmount: COIN_CONSTANTS.CHALLENGE_WIN_POT,
           inviteCode,
           expiresAt,
           status: ChallengeStatus.PENDING,
+          questionIds,
         },
       });
     });
@@ -275,6 +297,40 @@ export class ChallengeService {
     });
   }
 
+  // ── Get Challenge Questions ───────────────────────────────────────────────
+
+  async getChallengeQuestions(userId: string, challengeId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+    });
+    if (!challenge) throw new NotFoundException('Challenge not found.');
+
+    if (challenge.creatorId !== userId && challenge.opponentId !== userId) {
+      throw new ForbiddenException('You are not a participant in this challenge.');
+    }
+
+    const questions = await this.prisma.question.findMany({
+      where: { id: { in: challenge.questionIds } },
+    });
+
+    // Order questions exactly as saved in questionIds
+    const orderedQuestions = challenge.questionIds
+      .map((id) => questions.find((q) => q.id === id))
+      .filter(Boolean);
+
+    return orderedQuestions.map((q) => ({
+      id: q!.id,
+      questionText: q!.questionText,
+      imageUrl: q!.imageUrl,
+      optionA: q!.optionA,
+      optionB: q!.optionB,
+      optionC: q!.optionC,
+      optionD: q!.optionD,
+      correctAnswer: q!.correctAnswer,
+      difficulty: q!.difficulty,
+    }));
+  }
+
   // ── Challenge History ─────────────────────────────────────────────────────
 
   async getHistory(userId: string) {
@@ -290,6 +346,38 @@ export class ChallengeService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  async getChallenge(userId: string, challengeId: string) {
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+      include: { category: true },
+    });
+    if (!challenge) throw new NotFoundException('Challenge not found.');
+    if (challenge.creatorId !== userId && challenge.opponentId !== userId) {
+      throw new ForbiddenException('You are not a participant in this challenge.');
+    }
+
+    let result: 'win' | 'lose' | 'draw' | 'pending' = 'pending';
+    if (challenge.status === ChallengeStatus.COMPLETED) {
+      if (challenge.winnerId === null) {
+        result = 'draw';
+      } else if (challenge.winnerId === userId) {
+        result = 'win';
+      } else {
+        result = 'lose';
+      }
+    }
+
+    return {
+      id: challenge.id,
+      status: challenge.status,
+      result,
+      creatorScore: challenge.creatorScore,
+      opponentScore: challenge.opponentScore,
+      winnerId: challenge.winnerId,
+      isCreator: challenge.creatorId === userId,
+    };
+  }
 
   private generateInviteCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

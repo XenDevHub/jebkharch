@@ -10,6 +10,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 class UpdateProfileDto {
   @ApiPropertyOptional() @IsOptional() @IsString() name?: string;
   @ApiPropertyOptional() @IsOptional() @IsEmail() email?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() dob?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() easypaisaNumber?: string;
 }
 
 class ChangePasswordDto {
@@ -33,7 +35,10 @@ export class UserController {
   @Patch('update')
   @ApiOperation({ summary: 'Update profile (name, email, dob)' })
   update(@CurrentUser('id') userId: string, @Body() dto: UpdateProfileDto) {
-    return this.userService.updateProfile(userId, dto);
+    return this.userService.updateProfile(userId, {
+      ...dto,
+      dob: dto.dob ? new Date(dto.dob) : undefined,
+    });
   }
 
   @Post('upload-avatar')

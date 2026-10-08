@@ -3,11 +3,11 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ChallengeService } from './challenge.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { IsString, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsInt, Min, Max, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 class CreateChallengeDto {
-  @ApiProperty() @IsString() categoryId: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsString() categoryId?: string;
 }
 class JoinByCodeDto {
   @ApiProperty() @IsString() inviteCode: string;
@@ -42,9 +42,21 @@ export class ChallengeController {
     return this.challengeService.submitResult(userId, dto.challengeId, dto.score);
   }
 
+  @Get(':id/questions')
+  @ApiOperation({ summary: 'Get questions for a challenge' })
+  getQuestions(@CurrentUser('id') userId: string, @Param('id') challengeId: string) {
+    return this.challengeService.getChallengeQuestions(userId, challengeId);
+  }
+
   @Get('history')
   @ApiOperation({ summary: 'Get challenge history' })
   history(@CurrentUser('id') userId: string) {
     return this.challengeService.getHistory(userId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a single challenge by ID' })
+  getOne(@CurrentUser('id') userId: string, @Param('id') challengeId: string) {
+    return this.challengeService.getChallenge(userId, challengeId);
   }
 }

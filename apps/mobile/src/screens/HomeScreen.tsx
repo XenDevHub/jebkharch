@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl,
+  TouchableOpacity, RefreshControl, ActivityIndicator,
 } from 'react-native';
 import Animated, {
   FadeInDown, FadeInRight,
@@ -50,6 +50,11 @@ export default function HomeScreen({ navigation }: any) {
   const [userName, setUserName] = useState('Player');
   const countdown = useCountdown(TOURNAMENT_SECONDS);
 
+  const [adActive, setAdActive] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(5);
+  const [rewardAmount, setRewardAmount] = useState<number | null>(null);
+  const [adLoading, setAdLoading] = useState(false);
+
   const walletScale = useSharedValue(1);
   const walletStyle = useAnimatedStyle(() => ({
     transform: [{ scale: walletScale.value }],
@@ -57,12 +62,16 @@ export default function HomeScreen({ navigation }: any) {
 
   const fetchData = async () => {
     try {
-      const [catRes, walletRes] = await Promise.all([
+      const [catRes, walletRes, profileRes] = await Promise.all([
         api.quiz.getCategories(),
         api.wallet.getBalance(),
+        api.user.getProfile(),
       ]);
       setCategories(catRes.data);
       setBalance(walletRes.data.balance);
+      if (profileRes.data?.name) {
+        setUserName(profileRes.data.name);
+      }
     } catch {}
   };
 
@@ -72,6 +81,40 @@ export default function HomeScreen({ navigation }: any) {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
+  };
+
+  const watchAd = async () => {
+    if (adLoading || adActive) return;
+    setAdCountdown(5);
+    setAdActive(true);
+    setRewardAmount(null);
+
+    const interval = setInterval(() => {
+      setAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          triggerAdReward();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const triggerAdReward = async () => {
+    setAdLoading(true);
+    try {
+      const res = await api.ads.watch();
+      const reward = res.data?.reward || 1;
+      setRewardAmount(reward);
+      const walletRes = await api.wallet.getBalance();
+      setBalance(walletRes.data.balance);
+    } catch (e: any) {
+      console.log('Error claiming ad reward', e);
+      setAdActive(false);
+    } finally {
+      setAdLoading(false);
+    }
   };
 
   return (
@@ -210,6 +253,50 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </Animated.View>
 
+        {/* ── Earn Extra Coins Banner ── */}
+        <Animated.View entering={FadeInDown.delay(220)}>
+          <TouchableOpacity activeOpacity={0.9} style={styles.adCard} onPress={watchAd}>
+            <LinearGradient
+              colors={[`${colors.primary}25`, `${colors.primary}08`]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.adGradient}
+            >
+              <View style={styles.adLeft}>
+                <View style={styles.adBadge}>
+                  <Text style={styles.adBadgeText}>📺 FREE COINS</Text>
+                </View>
+                <Text style={styles.adTitle}>Earn Extra Points</Text>
+                <Text style={styles.adSubtitle}>Watch a sponsor video to get 1-3 free coins!</Text>
+              </View>
+              <Text style={{ fontSize: 44 }}>🎥</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* ── Challenge a Friend Banner ── */}
+        <Animated.View entering={FadeInDown.delay(240)}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.challengeCard}
+            onPress={() => navigation.navigate('ChallengeLobby')}
+          >
+            <LinearGradient
+              colors={['#7c3aed25', '#7c3aed08']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.challengeGradient}
+            >
+              <View style={styles.challengeLeft}>
+                <View style={[styles.challengeBadge, { backgroundColor: '#7c3aed35', borderColor: '#7c3aed50' }]}>
+                  <Text style={[styles.challengeBadgeText, { color: '#a78bfa' }]}>👥 1v1 BATTLE</Text>
+                </View>
+                <Text style={styles.challengeTitle}>Challenge Your Friend</Text>
+                <Text style={styles.challengeSubtitle}>Play 1v1 battle. Entry 100 coins. Winner takes 200!</Text>
+              </View>
+              <Text style={{ fontSize: 44 }}>⚔️</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* ── Categories ── */}
         <Animated.View entering={FadeInDown.delay(250)} style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Quiz Categories</Text>
@@ -233,6 +320,36 @@ export default function HomeScreen({ navigation }: any) {
       </ScrollView>
 
       <BottomNav active="Home" navigation={navigation} />
+
+      {/* Ad Overlay Modal */}
+      {adActive && (
+        <View style={styles.adModalOverlay}>
+          <View style={styles.adModalContent}>
+            {rewardAmount === null ? (
+              <View style={{ alignItems: 'center', gap: 15 }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.adModalTitle}>Sponsor Ad Playing...</Text>
+                <Text style={styles.adModalCountdown}>Reward in {adCountdown}s</Text>
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', gap: 15 }}>
+                <Text style={{ fontSize: 50 }}>🎉</Text>
+                <Text style={styles.adModalTitle}>Reward Earned!</Text>
+                <Text style={styles.adModalReward}>+{rewardAmount} Coins</Text>
+                <TouchableOpacity
+                  style={styles.adCloseBtn}
+                  onPress={() => {
+                    setAdActive(false);
+                    setRewardAmount(null);
+                  }}
+                >
+                  <Text style={styles.adCloseBtnText}>Awesome!</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -333,4 +450,87 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.headlineSm, color: colors.white },
   seeAll: { ...typography.labelSm, color: colors.primary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  // Ad and Challenge cards
+  adCard: {
+    borderRadius: borderRadius.xxl, overflow: 'hidden',
+    borderWidth: 1, borderColor: `${colors.primary}40`,
+  },
+  adGradient: {
+    padding: spacing.md, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'space-between',
+  },
+  adLeft: { gap: 4 },
+  adBadge: {
+    backgroundColor: `${colors.primary}25`,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: borderRadius.sm, alignSelf: 'flex-start',
+    borderWidth: 1, borderColor: `${colors.primary}50`,
+  },
+  adBadgeText: { ...typography.labelSm, color: colors.primary, fontSize: 10 },
+  adTitle: { ...typography.labelMd, color: colors.white, fontSize: 16 },
+  adSubtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, fontSize: 12 },
+
+  challengeCard: {
+    borderRadius: borderRadius.xxl, overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.4)',
+  },
+  challengeGradient: {
+    padding: spacing.md, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'space-between',
+  },
+  challengeLeft: { gap: 4 },
+  challengeBadge: {
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: borderRadius.sm, alignSelf: 'flex-start',
+    borderWidth: 1,
+  },
+  challengeBadgeText: { ...typography.labelSm, fontSize: 10 },
+  challengeTitle: { ...typography.labelMd, color: colors.white, fontSize: 16 },
+  challengeSubtitle: { ...typography.bodyMd, color: colors.onSurfaceVariant, fontSize: 12 },
+
+  // Ad modal overlay
+  adModalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  adModalContent: {
+    backgroundColor: colors.surfaceElevated,
+    padding: spacing.xl,
+    borderRadius: borderRadius.xxl,
+    width: '80%',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.glassBorderBright,
+  },
+  adModalTitle: {
+    ...typography.headlineSm,
+    color: colors.white,
+    textAlign: 'center',
+  },
+  adModalCountdown: {
+    ...typography.bodyLg,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  adModalReward: {
+    ...typography.displayMd,
+    color: colors.secondary,
+    textShadowColor: `${colors.secondary}40`,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  adCloseBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: borderRadius.pill,
+    marginTop: 10,
+  },
+  adCloseBtnText: {
+    ...typography.labelMd,
+    color: colors.onPrimary,
+  },
 });
