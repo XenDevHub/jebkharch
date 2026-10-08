@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Query, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -111,5 +111,73 @@ export class AdminController {
   @ApiOperation({ summary: '[ADMIN] Get platform analytics dashboard' })
   getAnalytics() {
     return this.adminService.getAnalytics();
+  }
+
+  // ── Missions ──────────────────────────────────────────────────────────────
+
+  @Get('missions')
+  @ApiOperation({ summary: '[ADMIN] List all missions' })
+  getMissions() {
+    return this.adminService.getMissions();
+  }
+
+  @Post('missions')
+  @ApiOperation({ summary: '[ADMIN] Create a new mission' })
+  createMission(@Body() body: any) {
+    return this.adminService.createMission(body);
+  }
+
+  @Delete('missions/:id')
+  @ApiOperation({ summary: '[ADMIN] Delete a mission' })
+  deleteMission(@Param('id') id: string) {
+    return this.adminService.deleteMission(id);
+  }
+
+  // ── Teams ─────────────────────────────────────────────────────────────────
+
+  @Delete('teams/:id')
+  @ApiOperation({ summary: '[ADMIN] Delete a team' })
+  deleteTeam(@Param('id') id: string) {
+    return this.adminService.deleteTeam(id);
+  }
+
+  // ── Seasons ───────────────────────────────────────────────────────────────
+
+  @Get('seasons')
+  @ApiOperation({ summary: '[ADMIN] List all seasons' })
+  getSeasons() {
+    return this.adminService.getSeasons();
+  }
+
+  @Post('seasons')
+  @ApiOperation({ summary: '[ADMIN] Create a new season' })
+  createSeason(@Body() body: any) {
+    return this.adminService.createSeason(body);
+  }
+
+  @Patch('seasons/:id')
+  @ApiOperation({ summary: '[ADMIN] Update season (activate/deactivate)' })
+  updateSeason(@Param('id') id: string, @Body() body: any) {
+    return this.adminService.updateSeason(id, body);
+  }
+
+  @Delete('seasons/:id')
+  @ApiOperation({ summary: '[ADMIN] Delete a season' })
+  deleteSeason(@Param('id') id: string) {
+    return this.adminService.deleteSeason(id);
+  }
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+
+  @Get('notifications/stats')
+  @ApiOperation({ summary: '[ADMIN] Get push notification stats' })
+  getNotificationStats() {
+    return this.adminService.getNotificationStats();
+  }
+
+  @Post('notifications/send')
+  @ApiOperation({ summary: '[ADMIN] Send push notification to users' })
+  sendNotification(@Body() body: { title: string; body: string; target: string }) {
+    return this.adminService.sendPushNotification(body.title, body.body, body.target);
   }
 }

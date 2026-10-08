@@ -236,7 +236,46 @@ export const api = {
     getOne: async (challengeId: string) => {
       return apiClient.get(`/challenge/${challengeId}`);
     },
-  }
+  },
+  streak: {
+    getStatus: async () => apiClient.get('/streak/status'),
+    claimDaily: async () => apiClient.post('/streak/claim'),
+    buyFreeze: async () => apiClient.post('/streak/buy-freeze'),
+  },
+  missions: {
+    getMissions: async () => apiClient.get('/missions'),
+    claimMission: async (missionId: string) => apiClient.post(`/missions/${missionId}/claim`),
+    getAchievements: async () => apiClient.get('/missions/achievements'),
+  },
+  tickets: {
+    getBalance: async () => apiClient.get('/tickets'),
+    claimFreeDaily: async () => apiClient.post('/tickets/claim-daily'),
+    buyTicket: async (source: 'BOUGHT_COINS' | 'REWARDED_AD') => apiClient.post('/tickets/buy', { source }),
+  },
+  wrongAnswers: {
+    getBank: async () => apiClient.get('/wrong-answers'),
+    getMastered: async () => apiClient.get('/wrong-answers/mastered'),
+    save: async (questionId: string, selectedAnswer: string) => apiClient.post('/wrong-answers/save', { questionId, selectedAnswer }),
+    markMastered: async (id: string) => apiClient.post(`/wrong-answers/${id}/master`),
+  },
+  referral: {
+    getMyCode: async () => apiClient.get('/referral/my-code'),
+    applyCode: async (referralCode: string, deviceId?: string) => apiClient.post('/referral/apply', { referralCode, deviceId }),
+  },
+  bonus: {
+    getLives: async () => apiClient.get('/bonus/lives'),
+    spinWheel: async () => apiClient.post('/bonus/spin'),
+    watchAd: async (adType: string, rewardType: 'coins' | 'life') => apiClient.post('/bonus/watch-ad', { adType, rewardType }),
+  },
+  team: {
+    getTeams: async () => apiClient.get('/teams'),
+    createTeam: async (name: string, description?: string) => apiClient.post('/teams', { name, description }),
+    joinTeam: async (teamId: string) => apiClient.post(`/teams/${teamId}/join`),
+    leaveTeam: async () => apiClient.post('/teams/leave'),
+  },
+  notifications: {
+    registerToken: async (token: string) => apiClient.post('/user/push-token', { token }),
+  },
 };
 
 const mockWithdrawals: Array<{ id: string; amount: number; account: string; status: string; createdAt: string }> = [

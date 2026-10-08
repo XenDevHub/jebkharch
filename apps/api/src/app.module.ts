@@ -12,6 +12,12 @@ import { AdminModule } from './admin/admin.module';
 import { AdsModule } from './ads/ads.module';
 import { FraudModule } from './fraud/fraud.module';
 import { StorageModule } from './storage/storage.module';
+import { StreakModule } from './streak/streak.module';
+import { MissionsModule } from './missions/missions.module';
+import { TicketsModule } from './tickets/tickets.module';
+import { WrongAnswersModule } from './wrong-answers/wrong-answers.module';
+import { BonusModule } from './bonus/bonus.module';
+import { TeamModule } from './team/team.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -49,6 +55,12 @@ import { AppController } from './app.controller';
     ReferralModule,
     AdsModule,
     FraudModule,
+    StreakModule,
+    MissionsModule,
+    TicketsModule,
+    WrongAnswersModule,
+    BonusModule,
+    TeamModule,
 
     // ── Admin ─────────────────────────────────────────────────────────────
     AdminModule,

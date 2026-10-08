@@ -220,11 +220,15 @@ export class QuizService {
       });
 
       if (coinsWon > 0) {
+        const newXp = user!.xp + finalXp;
+        const newLevel = Math.max(user!.level, Math.floor(Math.sqrt(newXp / 100)) + 1);
+
         await tx.user.update({
           where: { id: userId },
           data: {
             coins: { increment: coinsWon },
-            xp: { increment: finalXp },
+            xp: newXp,
+            level: newLevel,
           },
         });
 
@@ -245,7 +249,9 @@ export class QuizService {
       } else {
         // Still update XP
         if (finalXp > 0) {
-          await tx.user.update({ where: { id: userId }, data: { xp: { increment: finalXp } } });
+          const newXp = user!.xp + finalXp;
+          const newLevel = Math.max(user!.level, Math.floor(Math.sqrt(newXp / 100)) + 1);
+          await tx.user.update({ where: { id: userId }, data: { xp: newXp, level: newLevel } });
         }
       }
     });

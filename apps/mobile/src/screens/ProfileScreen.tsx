@@ -221,6 +221,99 @@ export default function ProfileScreen({ navigation }: Props) {
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Missions')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: `${colors.secondary}20` }]}>
+              <Ionicons name="star" size={20} color={colors.secondary} />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Missions & Achievements</Text>
+              <Text style={styles.menuSubtitle}>Complete tasks to earn rewards</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Spin')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: '#8b5cf620' }]}>
+              <Ionicons name="gift" size={20} color="#8b5cf6" />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Daily Spin Wheel</Text>
+              <Text style={styles.menuSubtitle}>Spin once a day for free rewards</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('VoiceQuiz')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: '#06b6d420' }]}>
+              <Ionicons name="mic" size={20} color="#06b6d4" />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Voice Quiz 🎙️</Text>
+              <Text style={styles.menuSubtitle}>Listen to questions & answer</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Referral')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: `${colors.primary}20` }]}>
+              <Ionicons name="people" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Refer & Earn</Text>
+              <Text style={styles.menuSubtitle}>Invite friends for bonus coins</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Teams')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: '#f59e0b20' }]}>
+              <Ionicons name="shield-half" size={20} color="#f59e0b" />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Clans & Teams</Text>
+              <Text style={styles.menuSubtitle}>Join a team and compete</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('WrongAnswers')}>
+            <View style={[styles.menuIconContainer, { backgroundColor: `${colors.error}20` }]}>
+              <Ionicons name="book" size={20} color={colors.error} />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Learn From Mistakes</Text>
+              <Text style={styles.menuSubtitle}>Review and master missed questions</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={async () => {
+            Alert.alert(
+              'Buy Streak Freeze',
+              'Use 200 Coins to buy a streak freeze? It will automatically protect your streak if you miss a day.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Buy (200 🪙)', onPress: async () => {
+                  try {
+                    await api.streak.buyFreeze();
+                    Alert.alert('Success', 'Streak freeze purchased! 🧊');
+                  } catch (e: any) {
+                    Alert.alert('Error', e.response?.data?.message || 'Failed to buy freeze');
+                  }
+                } },
+              ]
+            );
+          }}>
+            <View style={[styles.menuIconContainer, { backgroundColor: '#38bdf820' }]}>
+              <Ionicons name="snow" size={20} color="#38bdf8" />
+            </View>
+            <View style={styles.menuTextContainer}>
+              <Text style={styles.menuTitle}>Streak Freeze</Text>
+              <Text style={styles.menuSubtitle}>Buy freeze to protect your streak</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Logout Button */}

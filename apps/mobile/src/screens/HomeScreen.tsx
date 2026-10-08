@@ -48,6 +48,9 @@ export default function HomeScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [balance, setBalance] = useState(0);
   const [userName, setUserName] = useState('Player');
+  const [streak, setStreak] = useState(0);
+  const [tickets, setTickets] = useState(0);
+  const [lives, setLives] = useState(5);
   const countdown = useCountdown(TOURNAMENT_SECONDS);
 
   const [adActive, setAdActive] = useState(false);
@@ -62,16 +65,21 @@ export default function HomeScreen({ navigation }: any) {
 
   const fetchData = async () => {
     try {
-      const [catRes, walletRes, profileRes] = await Promise.all([
+      const [catRes, walletRes, profileRes, streakRes, livesRes] = await Promise.all([
         api.quiz.getCategories(),
         api.wallet.getBalance(),
         api.user.getProfile(),
+        api.streak.getStatus(),
+        api.bonus.getLives(),
       ]);
       setCategories(catRes.data);
       setBalance(walletRes.data.balance);
       if (profileRes.data?.name) {
         setUserName(profileRes.data.name);
+        setTickets(profileRes.data.tournamentTickets || 0);
       }
+      setStreak(streakRes.data.currentStreak || 0);
+      setLives(livesRes.data.lives);
     } catch {}
   };
 
@@ -141,24 +149,64 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           </TouchableOpacity>
 
-          <Animated.View style={walletStyle}>
-            <TouchableOpacity
-              style={styles.walletChip}
-              onPress={() => {
-                walletScale.value = withSpring(0.9, { damping: 10 }, () => {
-                  walletScale.value = withSpring(1);
-                });
-                navigation.navigate('Wallet');
-              }}
-            >
-              <Ionicons name="star" size={14} color={colors.secondary} />
-              <AnimatedNumber
-                value={balance}
-                style={styles.walletText}
-                duration={800}
-              />
+          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+            <TouchableOpacity style={styles.walletChip}>
+              <Text style={{ fontSize: 14 }}>❤️</Text>
+              <Text style={styles.walletText}>{lives}</Text>
             </TouchableOpacity>
-          </Animated.View>
+
+            <TouchableOpacity style={styles.walletChip}>
+              <Text style={{ fontSize: 14 }}>🔥</Text>
+              <Text style={styles.walletText}>{streak}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.walletChip}>
+              <Text style={{ fontSize: 14 }}>🎟️</Text>
+              <Text style={styles.walletText}>{tickets}</Text>
+            </TouchableOpacity>
+
+            <Animated.View style={walletStyle}>
+              <TouchableOpacity
+                style={styles.walletChip}
+                onPress={() => {
+                  walletScale.value = withSpring(0.9, { damping: 10 }, () => {
+                    walletScale.value = withSpring(1);
+                  });
+                  navigation.navigate('Wallet');
+                }}
+              >
+                <Ionicons name="star" size={14} color={colors.secondary} />
+                <AnimatedNumber
+                  value={balance}
+                  style={styles.walletText}
+                  duration={800}
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Animated.View>
+
+        {/* ── Daily Spin & Missions ── */}
+        <Animated.View entering={FadeInDown.delay(120)}>
+          <View style={{ flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.lg, marginTop: spacing.md }}>
+            <TouchableOpacity 
+              style={[styles.actionCard, { flex: 1, backgroundColor: `${colors.primary}20`, borderColor: colors.primary }]}
+              onPress={() => navigation.navigate('Spin')}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 8 }}>🎡</Text>
+              <Text style={styles.actionCardTitle}>Daily Spin</Text>
+              <Text style={styles.actionCardDesc}>Free rewards</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionCard, { flex: 1, backgroundColor: `${colors.secondary}20`, borderColor: colors.secondary }]}
+              onPress={() => navigation.navigate('Missions')}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 8 }}>🎯</Text>
+              <Text style={styles.actionCardTitle}>Missions</Text>
+              <Text style={styles.actionCardDesc}>Earn Coins</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
 
         {/* ── Daily Challenge Banner ── */}
@@ -532,5 +580,21 @@ const styles = StyleSheet.create({
   adCloseBtnText: {
     ...typography.labelMd,
     color: colors.onPrimary,
+  },
+  actionCard: {
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionCardTitle: {
+    ...typography.labelMd,
+    color: colors.white,
+  },
+  actionCardDesc: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
 });

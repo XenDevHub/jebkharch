@@ -16,6 +16,12 @@ import WithdrawalHistoryScreen from '../screens/wallet/WithdrawalHistoryScreen';
 import ChallengeLobbyScreen from '../screens/challenge/ChallengeLobbyScreen';
 import ChallengePlayScreen from '../screens/challenge/ChallengePlayScreen';
 import ChallengeResultScreen from '../screens/challenge/ChallengeResultScreen';
+import MissionsScreen from '../screens/MissionsScreen';
+import ReferralScreen from '../screens/ReferralScreen';
+import WrongAnswersScreen from '../screens/WrongAnswersScreen';
+import SpinScreen from '../screens/SpinScreen';
+import TeamsScreen from '../screens/TeamsScreen';
+import VoiceQuizScreen from '../screens/VoiceQuizScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -32,6 +38,12 @@ export type RootStackParamList = {
   ChallengeLobby: undefined;
   ChallengePlay: { challengeId: string; isCreator?: boolean };
   ChallengeResult: { challengeId: string; myScore: number; total: number; result?: 'win' | 'lose' | 'draw' };
+  Missions: undefined;
+  Referral: undefined;
+  WrongAnswers: undefined;
+  Spin: undefined;
+  Teams: undefined;
+  VoiceQuiz: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -54,6 +66,12 @@ export function AppNavigator() {
         <Stack.Screen name="ChallengeLobby" component={ChallengeLobbyScreen} />
         <Stack.Screen name="ChallengePlay" component={ChallengePlayScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="ChallengeResult" component={ChallengeResultScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Missions" component={MissionsScreen} />
+        <Stack.Screen name="Referral" component={ReferralScreen} />
+        <Stack.Screen name="WrongAnswers" component={WrongAnswersScreen} />
+        <Stack.Screen name="Spin" component={SpinScreen} />
+        <Stack.Screen name="Teams" component={TeamsScreen} />
+        <Stack.Screen name="VoiceQuiz" component={VoiceQuizScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

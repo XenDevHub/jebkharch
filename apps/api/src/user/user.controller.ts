@@ -14,6 +14,10 @@ class UpdateProfileDto {
   @ApiPropertyOptional() @IsOptional() @IsString() easypaisaNumber?: string;
 }
 
+class PushTokenDto {
+  @ApiProperty() @IsString() token: string;
+}
+
 class ChangePasswordDto {
   @ApiProperty() @IsString() currentPassword: string;
   @ApiProperty() @IsString() @MinLength(8) newPassword: string;
@@ -61,5 +65,15 @@ export class UserController {
   @ApiOperation({ summary: 'Global XP leaderboard' })
   leaderboard(@Query('page') page = 1, @Query('pageSize') pageSize = 50) {
     return this.userService.getLeaderboard(+page, +pageSize);
+  }
+
+  @Post('push-token')
+  @ApiOperation({ summary: 'Register Expo push token for notifications' })
+  async registerPushToken(@CurrentUser('id') userId: string, @Body() dto: PushTokenDto) {
+    await this.userService['prisma'].user.update({
+      where: { id: userId },
+      data: { expoPushToken: dto.token },
+    }).catch(() => null);
+    return { success: true };
   }
 }

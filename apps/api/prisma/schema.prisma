@@ -80,6 +80,26 @@ enum OtpPurpose {
   CHANGE_PHONE
 }
 
+enum MissionType {
+  DAILY
+  WEEKLY
+  SPECIAL
+}
+
+enum MissionStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+enum TicketSource {
+  MISSION_REWARD
+  ACHIEVEMENT_REWARD
+  STREAK_REWARD
+  ADMIN_GRANT
+  PURCHASE
+}
+
 // ── Models ────────────────────────────────────────────────────────────────────
 
 model User {
@@ -114,6 +134,32 @@ model User {
   // Daily tracking
   lastDailyBonusAt DateTime?
 
+  // Streak
+  currentStreak      Int      @default(0)
+  longestStreak      Int      @default(0)
+  lastStreakDate     DateTime?
+  streakFreezes      Int      @default(1)  // starts with 1 free freeze
+
+  // Energy / Lives System
+  lives              Int      @default(5)
+  lastLifeRefillAt   DateTime @default(now())
+
+  // Spin Wheel / Rewards
+  lastSpinAt         DateTime?
+
+  // Push Notifications
+  expoPushToken      String?
+
+  // Team / Clan System
+  teamId             String?
+  team               Team?    @relation(fields: [teamId], references: [id])
+
+  // Level
+  level              Int      @default(1)
+
+  // Tickets
+  tournamentTickets  Int      @default(0)
+
   // Fraud
   fraudScore   Int      @default(0)   // 0-100; >70 = high risk
   isFlagged    Boolean  @default(false)
@@ -133,6 +179,10 @@ model User {
   adLogs               AdLog[]
   deviceSessions       DeviceSession[]
   fraudEvents          FraudEvent[]
+  userMissions         UserMission[]
+  userAchievements     UserAchievement[]
+  ticketLogs           TournamentTicketLog[]
+  wrongAnswers         WrongAnswer[]
 
   @@index([phone])
   @@index([referralCode])
@@ -197,6 +247,7 @@ model Question {
 
   category     Category   @relation(fields: [categoryId], references: [id])
   quizAnswers  QuizAnswer[]
+  wrongAnswers WrongAnswer[]
 
   @@index([categoryId])
   @@index([difficulty])
@@ -388,4 +439,159 @@ model FraudEvent {
   @@index([userId])
   @@index([createdAt])
   @@map("fraud_events")
+}
+
+// ── Streak ────────────────────────────────────────────────────────────────────
+
+model StreakLog {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime // the date this streak was counted (date only)
+  usedFreeze Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("streak_logs")
+}
+
+// ── Missions ──────────────────────────────────────────────────────────────────
+
+model Mission {
+  id           String      @id @default(uuid())
+  title        String
+  description  String
+  icon         String      @default("🎯")
+  type         MissionType @default(DAILY)
+  targetValue  Int         // e.g. answer 50 questions
+  rewardCoins  Int         @default(0)
+  rewardXp     Int         @default(0)
+  rewardTickets Int        @default(0)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  userMissions UserMission[]
+
+  @@map("missions")
+}
+
+model UserMission {
+  id           String        @id @default(uuid())
+  userId       String
+  missionId    String
+  progress     Int           @default(0)
+  status       MissionStatus @default(ACTIVE)
+  assignedAt   DateTime      @default(now())
+  completedAt  DateTime?
+  expiresAt    DateTime
+
+  user         User    @relation(fields: [userId], references: [id])
+  mission      Mission @relation(fields: [missionId], references: [id])
+
+  @@unique([userId, missionId, assignedAt])
+  @@index([userId])
+  @@index([status])
+  @@map("user_missions")
+}
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+model Achievement {
+  id           String   @id @default(uuid())
+  key          String   @unique  // e.g. 'STREAK_7', 'WIN_10'
+  title        String
+  description  String
+  icon         String   @default("🏆")
+  rewardCoins  Int      @default(0)
+  rewardXp     Int      @default(0)
+  rewardTickets Int     @default(0)
+  isSecret     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+// ── Tournament Tickets ────────────────────────────────────────────────────────
+
+model TournamentTicketLog {
+  id        String       @id @default(uuid())
+  userId    String
+  amount    Int          // positive = earned, negative = spent
+  source    TicketSource
+  referenceId String?
+  createdAt DateTime     @default(now())
+
+  user      User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("tournament_ticket_logs")
+}
+
+// ── Wrong Answer Bank ─────────────────────────────────────────────────────────
+
+model WrongAnswer {
+  id          String   @id @default(uuid())
+  userId      String
+  questionId  String
+  sessionId   String?
+  practiceCount Int    @default(0)  // how many times practiced
+  masteredAt  DateTime?  // when user got it right in practice
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  question    Question @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@map("wrong_answers")
+}
+
+// ==========================================
+// TEAM / CLAN SYSTEM
+// ==========================================
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  logo        String?
+  description String?
+  score       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     User[]
+  
+  @@map("teams")
+}
+
+// ==========================================
+// SEASON / CHAMPIONSHIP
+// ==========================================
+
+model Season {
+  id          String   @id @default(uuid())
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(false)
+  prizePool   Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@map("seasons")
 }
