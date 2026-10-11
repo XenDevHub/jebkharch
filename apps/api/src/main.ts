@@ -19,6 +19,10 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:8081', // Expo Metro
       // Production origins
+      'https://jaibkharch.com',
+      'https://www.jaibkharch.com',
+      'https://admin.jaibkharch.com',
+      'https://api.jaibkharch.com',
       'https://admin.jebkharch.pk',
       'https://api.jebkharch.pk',
       'http://109.199.122.238:3000',

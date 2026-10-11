@@ -118,8 +118,10 @@ export class AuthService {
       throw new ForbiddenException('Too many incorrect attempts. Please request a new OTP.');
     }
 
-    // DEV MODE: Accept "123456" as magic OTP
-    const isDevMode = this.config.get('NODE_ENV') === 'development';
+    // DEV or MOCK SMS MODE: Accept "123456" as magic OTP
+    const isDevMode =
+      this.config.get('NODE_ENV') === 'development' ||
+      this.config.get('SMS_PROVIDER') === 'mock';
     const isCorrect = isDevMode
       ? otpCode === '123456' || otpCode === otpRecord.otpCode
       : otpCode === otpRecord.otpCode;

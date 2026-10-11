@@ -14,12 +14,19 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const normalizePhone = (p: string) => {
+    let clean = p.replace(/[\s-]/g, '');
+    if (clean.startsWith('+92')) clean = '0' + clean.slice(3);
+    else if (!clean.startsWith('0')) clean = '0' + clean;
+    return clean;
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const cleanPhone = phone.startsWith('0') ? phone : `0${phone}`;
+      const cleanPhone = normalizePhone(phone);
       await api.auth.requestOtp(cleanPhone);
       setStep(2);
     } catch (err: any) {
@@ -34,7 +41,7 @@ export function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const cleanPhone = phone.startsWith('0') ? phone : `0${phone}`;
+      const cleanPhone = normalizePhone(phone);
       const res = await api.auth.login(cleanPhone, otp);
       
       // We must verify if the user has the ADMIN role
@@ -87,9 +94,21 @@ export function LoginPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading || phone.length < 10}>
+              <Button type="submit" className="w-full" disabled={loading || phone.length < 9}>
                 {loading ? 'Sending...' : 'Send OTP'}
               </Button>
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError('');
+                    setStep(2);
+                  }}
+                  className="text-xs text-muted-foreground hover:text-primary underline"
+                >
+                  Already have OTP? Click here
+                </button>
+              </div>
             </form>
           ) : (
             <form onSubmit={handleVerify} className="space-y-4">
