@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { adminApi } from '../api/client';
-import { AlertOctagon, Check, ShieldAlert, UserX, Info } from 'lucide-react';
+import { AlertOctagon, Check, ShieldAlert, UserX, Info, ChevronLeft, ChevronRight, RefreshCw, Calendar, Phone } from 'lucide-react';
 
 interface FraudAlert {
   id: string;
@@ -53,105 +53,198 @@ export default function FraudAlerts() {
     try {
       await adminApi.users.ban(userId, reason);
       alert('User banned successfully');
-      fetchAlerts(); // Refresh to see update
+      fetchAlerts();
     } catch (err) {
       console.error('Failed to ban user:', err);
       alert('Failed to ban user');
     }
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'CRITICAL':
-        return 'bg-red-500/10 text-red-500 border border-red-500/30';
+        return 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse';
       case 'HIGH':
-        return 'bg-orange-500/10 text-orange-500 border border-orange-500/30';
+        return 'bg-orange-500/20 text-orange-300 border-orange-500/40';
       case 'MEDIUM':
-        return 'bg-amber-500/10 text-amber-500 border border-amber-500/30';
+        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
       default:
-        return 'bg-blue-500/10 text-blue-500 border border-blue-500/30';
+        return 'bg-sky-500/20 text-sky-300 border-sky-500/40';
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-        <AlertOctagon className="text-red-500" size={24} />
-        Fraud Detection & Alerts
-      </h1>
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+            <AlertOctagon className="text-rose-500" size={22} />
+            <span>Fraud Detection & Bot Alerts</span>
+          </h1>
+          <p className="text-xs text-slate-400">Automated telemetry flags for abnormal win rates, multi-accounting & speed-hacks</p>
+        </div>
+        <button
+          onClick={fetchAlerts}
+          className="p-2.5 glass-button-secondary rounded-xl text-slate-300 hover:text-white shrink-0"
+          title="Refresh alerts"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        </button>
+      </div>
 
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-gray-300">
-            <thead className="bg-gray-900 border-b border-gray-700">
+      {/* Mobile Card List (< md) */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="glass-card p-8 rounded-2xl text-center text-slate-400 text-xs">
+            <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-rose-400" />
+            Loading fraud alerts...
+          </div>
+        ) : alerts.length === 0 ? (
+          <div className="glass-card p-8 rounded-2xl text-center text-slate-400 text-xs">
+            No fraud alerts detected. System is secure.
+          </div>
+        ) : (
+          alerts.map((alert) => (
+            <div key={alert.id} className="glass-card p-4 rounded-2xl space-y-3 border-rose-500/20">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center space-x-1.5 font-semibold text-white text-sm">
+                    <Phone size={13} className="text-slate-400" />
+                    <span>{alert.phone}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-mono">{alert.userId}</p>
+                </div>
+                <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-bold border ${getSeverityBadge(alert.severity)}`}>
+                  {alert.severity}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold text-[10px] tracking-wide uppercase">
+                  {alert.type.replace('_', ' ')}
+                </span>
+                <span className="flex items-center space-x-1 text-[11px] text-slate-400">
+                  <Calendar size={11} className="text-slate-500" />
+                  <span>{new Date(alert.createdAt).toLocaleString()}</span>
+                </span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 text-xs flex items-start gap-2">
+                <Info size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                <span className="text-slate-300 leading-relaxed">{alert.details}</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                <div>
+                  {alert.status === 'PENDING' ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      <ShieldAlert size={11} className="mr-1" /> Flagged
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <Check size={11} className="mr-1" /> Resolved
+                    </span>
+                  )}
+                </div>
+
+                {alert.status === 'PENDING' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleResolve(alert.id, 'RESOLVED')}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold text-xs flex items-center space-x-1"
+                    >
+                      <Check size={13} />
+                      <span>Resolve</span>
+                    </button>
+                    <button
+                      onClick={() => handleBanUser(alert.userId)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold text-xs flex items-center space-x-1"
+                    >
+                      <UserX size={13} />
+                      <span>Ban</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop / Tablet Table (>= md) */}
+      <div className="hidden md:block glass-card rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto touch-scroll">
+          <table className="w-full text-left text-xs min-w-[720px]">
+            <thead className="bg-slate-900/80 border-b border-white/5 text-slate-400 font-semibold uppercase tracking-wider">
               <tr>
-                <th className="p-4 font-medium">User</th>
-                <th className="p-4 font-medium">Type</th>
-                <th className="p-4 font-medium">Severity</th>
-                <th className="p-4 font-medium">Details</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium text-right">Actions</th>
+                <th className="p-4">User Details</th>
+                <th className="p-4">Violation Type</th>
+                <th className="p-4">Severity</th>
+                <th className="p-4">Details</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5 text-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-gray-500">Loading alerts...</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">Loading alerts...</td>
                 </tr>
               ) : alerts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-gray-500">No fraud alerts detected. System is secure.</td>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">No fraud alerts detected. System is secure.</td>
                 </tr>
               ) : (
                 alerts.map((alert) => (
-                  <tr key={alert.id} className="border-b border-gray-700/50 hover:bg-gray-700/20">
+                  <tr key={alert.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="p-4">
                       <div className="font-semibold text-white">{alert.phone}</div>
-                      <div className="text-xs text-gray-500">{alert.userId}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{alert.userId}</div>
                     </td>
-                    <td className="p-4">
-                      <span className="font-semibold text-xs tracking-wider uppercase block">
+                    <td className="p-4 whitespace-nowrap">
+                      <span className="font-semibold text-xs tracking-wider uppercase block text-slate-200">
                         {alert.type.replace('_', ' ')}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-[10px] text-slate-400">
                         {new Date(alert.createdAt).toLocaleString()}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded font-bold ${getSeverityColor(alert.severity)}`}>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className={`inline-block text-[10px] px-2 py-0.5 rounded-full font-bold border ${getSeverityBadge(alert.severity)}`}>
                         {alert.severity}
                       </span>
                     </td>
-                    <td className="p-4 text-sm max-w-xs">
-                      <div className="flex items-start gap-1">
-                        <Info size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-300">{alert.details}</span>
+                    <td className="p-4 text-xs max-w-xs">
+                      <div className="flex items-start gap-1.5">
+                        <Info size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                        <span className="text-slate-300 leading-relaxed">{alert.details}</span>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       {alert.status === 'PENDING' ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
                           <ShieldAlert size={12} className="mr-1" /> Flagged
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <Check size={12} className="mr-1" /> Resolved
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right whitespace-nowrap">
                       {alert.status === 'PENDING' && (
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleResolve(alert.id, 'RESOLVED')}
-                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
                             title="Resolve Alert"
                           >
                             <Check size={16} />
                           </button>
                           <button
                             onClick={() => handleBanUser(alert.userId)}
-                            className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                            className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-colors"
                             title="Ban Associated User"
                           >
                             <UserX size={16} />
@@ -165,23 +258,26 @@ export default function FraudAlerts() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        <div className="p-4 border-t border-gray-700 flex justify-between items-center text-sm text-gray-400">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1 bg-gray-700 rounded-md disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span>Page {page}</span>
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 bg-gray-700 rounded-md"
-          >
-            Next
-          </button>
-        </div>
+      {/* Pagination Footer */}
+      <div className="glass-card p-3.5 sm:p-4 rounded-2xl flex items-center justify-between text-xs text-slate-400">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          className="px-3 py-1.5 rounded-lg glass-button-secondary disabled:opacity-30 flex items-center space-x-1"
+        >
+          <ChevronLeft size={15} />
+          <span>Previous</span>
+        </button>
+        <span>Page <strong className="text-slate-200">{page}</strong></span>
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          className="px-3 py-1.5 rounded-lg glass-button-secondary flex items-center space-x-1"
+        >
+          <span>Next</span>
+          <ChevronRight size={15} />
+        </button>
       </div>
     </div>
   );

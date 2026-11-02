@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
@@ -30,7 +30,8 @@ apiClient.interceptors.response.use(
 
 export const adminApi = {
   auth: {
-    login: (phone: string, otp: string) => apiClient.post('/auth/verify-otp', { phone, otp, deviceId: 'admin-portal' }),
+    requestOtp: (phone: string) => apiClient.post('/auth/send-otp', { phone, purpose: 'LOGIN' }),
+    login: (phone: string, otpCode: string) => apiClient.post('/auth/login', { phone, otpCode, deviceId: 'admin-portal' }),
   },
   users: {
     getList: (page: number, search?: string) => apiClient.get('/admin/users', { params: { page, search } }),

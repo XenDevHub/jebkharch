@@ -14,6 +14,8 @@
     color: #F1F5F9;
     overflow-x: hidden;
     min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Custom Scrollbar */
@@ -30,6 +32,12 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(99, 102, 241, 0.65);
+  }
+
+  /* Touch scrolling */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Users, CreditCard, ShieldAlert, Zap, TrendingUp, RefreshCw,
-  Coins, Award, Activity, Bell, ChevronRight, ArrowUpRight, CheckCircle2, Shield
+  Coins, Award, Activity, Bell, ChevronRight, CheckCircle2, Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -42,35 +42,35 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Top Banner Hero */}
-      <div className="relative overflow-hidden glass-card p-6 rounded-3xl border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/50">
+      <div className="relative overflow-hidden glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 via-purple-950/30 to-slate-900/50">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-2">
-              <Zap size={14} className="text-indigo-400" />
+            <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-2">
+              <Zap size={13} className="text-indigo-400" />
               <span>Real-time Dashboard Analytics</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-100 tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-100 tracking-tight">
               Welcome back, <span className="text-gradient-indigo">Admin</span> 👋
             </h1>
-            <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl leading-relaxed">
               Monitor user growth, withdrawal requests, game economies, and fraud alerts in real time.
             </p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={loadData}
               disabled={loading}
-              className="glass-button-secondary px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-200 flex items-center space-x-2"
+              className="glass-button-secondary px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-200 flex items-center justify-center space-x-2"
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               <span>Refresh Metrics</span>
             </button>
             <Link
               to="/withdrawals"
-              className="glass-button-primary px-4 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center space-x-2"
+              className="glass-button-primary px-4 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/30"
             >
               <CreditCard size={14} />
               <span>Process Payouts ({data?.withdrawals?.pending || 0})</span>
@@ -79,128 +79,128 @@ export default function Dashboard() {
         </div>
 
         {/* Ambient background accent light */}
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-10 -bottom-10 w-48 sm:w-64 h-48 sm:h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* Primary Key Performance Indicators Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
         {/* Card 1: Total Users */}
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+        <div className="glass-card p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Total Registered Users</p>
-              <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-100 mt-1">
                 {loading ? '...' : (data?.users?.total || 0).toLocaleString()}
               </h3>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-              <Users size={22} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform shrink-0">
+              <Users size={20} className="sm:w-[22px] sm:h-[22px]" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-xs text-emerald-400 space-x-1">
-            <TrendingUp size={14} />
+          <div className="mt-3 sm:mt-4 flex items-center text-xs text-emerald-400 space-x-1">
+            <TrendingUp size={13} />
             <span className="font-semibold">+12.4%</span>
             <span className="text-slate-500 ml-1">vs last week</span>
           </div>
         </div>
 
         {/* Card 2: Active Users */}
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+        <div className="glass-card p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Daily Active (DAU)</p>
-              <h3 className="text-2xl font-extrabold text-slate-100 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-100 mt-1">
                 {loading ? '...' : (data?.users?.dauToday || 0).toLocaleString()}
               </h3>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-              <Activity size={22} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform shrink-0">
+              <Activity size={20} className="sm:w-[22px] sm:h-[22px]" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-xs text-cyan-400 space-x-1">
+          <div className="mt-3 sm:mt-4 flex items-center text-xs text-cyan-400 space-x-1">
             <span className="font-semibold">Yesterday:</span>
             <span className="text-slate-300">{data?.users?.dauYesterday || 0}</span>
           </div>
         </div>
 
         {/* Card 3: Pending Withdrawals */}
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+        <div className="glass-card p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Pending Withdrawals</p>
-              <h3 className="text-2xl font-extrabold text-amber-400 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-amber-400 mt-1">
                 {loading ? '...' : (data?.withdrawals?.pending || 0).toLocaleString()}
               </h3>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-              <CreditCard size={22} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform shrink-0">
+              <CreditCard size={20} className="sm:w-[22px] sm:h-[22px]" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-xs text-amber-300 space-x-1">
+          <div className="mt-3 sm:mt-4 flex items-center text-xs text-amber-300 space-x-1">
             <span className="font-semibold">Requires Approval</span>
           </div>
         </div>
 
         {/* Card 4: Flagged Accounts */}
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+        <div className="glass-card p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400">Flagged Fraud Risk</p>
-              <h3 className="text-2xl font-extrabold text-rose-400 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-rose-400 mt-1">
                 {loading ? '...' : (data?.users?.flagged || 0).toLocaleString()}
               </h3>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
-              <ShieldAlert size={22} />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform shrink-0">
+              <ShieldAlert size={20} className="sm:w-[22px] sm:h-[22px]" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-xs text-rose-400 space-x-1">
-            <Shield size={14} />
+          <div className="mt-3 sm:mt-4 flex items-center text-xs text-rose-400 space-x-1">
+            <Shield size={13} />
             <span className="font-semibold">Auto-detected bot activity</span>
           </div>
         </div>
       </div>
 
       {/* Middle Grid: Economy Stats & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Economy Breakdown Card */}
-        <div className="lg:col-span-2 glass-card p-6 rounded-2xl space-y-5">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-2 glass-card p-4 sm:p-6 rounded-2xl space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+              <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center space-x-2">
                 <Coins className="text-amber-400" size={18} />
                 <span>Coin Economy & Quiz Stats</span>
               </h3>
               <p className="text-xs text-slate-400">Distribution of rewards across active players</p>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-slate-800 text-xs text-slate-300 font-mono">
+            <span className="self-start sm:self-auto px-2.5 py-1 rounded-full bg-slate-800 text-[11px] text-slate-300 font-mono">
               Live Feed
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase">Coins in Circulation</p>
-              <p className="text-lg font-bold text-amber-300 mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-1 sm:pt-2">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/60 border border-white/5">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase">Coins in Circulation</p>
+              <p className="text-base sm:text-lg font-bold text-amber-300 mt-1">
                 🪙 {(data?.economy?.totalCoinsInCirculation || 0).toLocaleString()}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase">Total Quiz Sessions</p>
-              <p className="text-lg font-bold text-indigo-300 mt-1">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/60 border border-white/5">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase">Total Quiz Sessions</p>
+              <p className="text-base sm:text-lg font-bold text-indigo-300 mt-1">
                 🎮 {(data?.quizzes?.totalSessions || 0).toLocaleString()}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase">Quiz Completion Rate</p>
-              <p className="text-lg font-bold text-emerald-300 mt-1">
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/60 border border-white/5">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase">Quiz Completion Rate</p>
+              <p className="text-base sm:text-lg font-bold text-emerald-300 mt-1">
                 🎯 {data?.quizzes?.totalSessions ? Math.round((data.quizzes.completedSessions / data.quizzes.totalSessions) * 100) : 88}%
               </p>
             </div>
           </div>
 
           {/* Visual Progress Bars */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-1 sm:pt-2">
             <div>
               <div className="flex justify-between text-xs text-slate-300 mb-1">
                 <span>Quiz Engagement Capacity</span>
@@ -224,16 +224,16 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Management Shortcuts */}
-        <div className="glass-card p-6 rounded-2xl flex flex-col justify-between space-y-4">
+        <div className="glass-card p-4 sm:p-6 rounded-2xl flex flex-col justify-between space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+            <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center space-x-2">
               <Award className="text-purple-400" size={18} />
               <span>Quick Actions</span>
             </h3>
             <p className="text-xs text-slate-400">Frequently used administration tools</p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2 sm:space-y-2.5">
             <Link
               to="/notifications"
               className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/5 hover:border-indigo-500/40 hover:bg-slate-800/80 transition-all text-xs font-semibold text-slate-200 group"
