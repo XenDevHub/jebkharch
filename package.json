@@ -7,6 +7,7 @@
     "dev:api": "pnpm --filter @jebkharch/api dev",
     "dev:admin": "pnpm --filter @jebkharch/admin dev",
     "dev:mobile": "pnpm --filter @jebkharch/mobile start",
+    "build": "pnpm --filter @jebkharch/admin build",
     "build:api": "pnpm --filter @jebkharch/api build",
     "build:admin": "pnpm --filter @jebkharch/admin build",
     "db:migrate": "pnpm --filter @jebkharch/api prisma:migrate",
