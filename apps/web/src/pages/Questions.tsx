@@ -213,6 +213,24 @@ export function QuestionsPage() {
               )}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-between p-4 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>
