@@ -321,21 +321,23 @@ Rules:
 - For Pakistani audience, include Pakistan-specific content where relevant
 - Do NOT include offensive, political, or divisive content
 
-Return ONLY a valid JSON array with this exact structure:
-[
-  {
-    "questionText": "...",
-    "optionA": "...",
-    "optionB": "...",
-    "optionC": "...",
-    "optionD": "...",
-    "correctAnswer": "A|B|C|D",
-    "explanation": "..."
-  }
-]`;
+Return ONLY a valid JSON object with a "questions" key containing an array of questions:
+{
+  "questions": [
+    {
+      "questionText": "...",
+      "optionA": "...",
+      "optionB": "...",
+      "optionC": "...",
+      "optionD": "...",
+      "correctAnswer": "A|B|C|D",
+      "explanation": "..."
+    }
+  ]
+}`;
 
     const response = await this.openai.chat.completions.create({
-      model: this.config.get('OPENAI_MODEL') || 'gpt-4o',
+      model: this.config.get('OPENAI_MODEL') || 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.7,
@@ -344,7 +346,9 @@ Return ONLY a valid JSON array with this exact structure:
     let questions: any[];
     try {
       const parsed = JSON.parse(response.choices[0].message.content || '{}');
-      questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
+      questions = Array.isArray(parsed)
+        ? parsed
+        : (parsed.questions || (Object.values(parsed).find((v) => Array.isArray(v)) as any[]) || []);
     } catch {
       throw new BadRequestException('AI returned invalid response format.');
     }

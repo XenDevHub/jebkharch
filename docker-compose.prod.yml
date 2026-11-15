@@ -47,6 +47,7 @@ services:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       - STORAGE_PROVIDER=local
       - STORAGE_LOCAL_PATH=/app/apps/api/uploads
     ports:

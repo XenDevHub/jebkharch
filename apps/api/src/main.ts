@@ -26,6 +26,8 @@ async function bootstrap() {
       'https://admin.jebkharch.pk',
       'https://api.jebkharch.pk',
       'http://109.199.122.238:3000',
+      'http://194.61.28.196:3000',
+      'http://194.61.28.196',
     ],
     credentials: true,
   });

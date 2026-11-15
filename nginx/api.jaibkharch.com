@@ -2,9 +2,9 @@
 # api.jaibkharch.com — NestJS API (reverse proxy)
 # ───────────────────────────────────────────────
 server {
-    listen 80;
-    listen [::]:80;
-    server_name api.jaibkharch.com;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name api.jaibkharch.com 194.61.28.196;
 
     # Proxy to NestJS running on port 3000
     location / {

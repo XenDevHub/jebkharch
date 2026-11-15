@@ -4,7 +4,7 @@ import * as Device from 'expo-device';
 
 // Determine the API base URL based on the environment
 // In local dev, use your local machine's IP instead of localhost for Android emulator support
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://109.199.122.238:3000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.jaibkharch.com/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
