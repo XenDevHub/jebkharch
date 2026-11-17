@@ -1,6 +1,6 @@
 // src/screens/ProfileScreen.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, RefreshControl } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -8,42 +8,41 @@ import { colors, typography, spacing, borderRadius } from '../theme/designSystem
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import BottomNav from '../components/BottomNav';
 import AnimatedNumber from '../components/AnimatedNumber';
+import { useProfile, useWalletBalance, useInvalidateQueries, QUERY_KEYS } from '../hooks/useAppData';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Profile'>;
 };
 
 export default function ProfileScreen({ navigation }: Props) {
-  const [balance, setBalance] = useState<number>(0);
+  const queryClient = useQueryClient();
+  const { invalidateProfile } = useInvalidateQueries();
+
+  // ── Cached queries — instant display, no loading flash ──
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: balance } = useWalletBalance();
+
   const [phone, setPhone] = useState<string>('');
-  const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
-  const fetchProfileData = async () => {
-    try {
-      const storedPhone = await AsyncStorage.getItem('user_phone');
-      if (storedPhone) setPhone(storedPhone);
-
-      const profileRes = await api.user.getProfile();
-      if (profileRes.data) {
-        setProfile(profileRes.data);
-        setEditName(profileRes.data.name || '');
-        setEditEmail(profileRes.data.email || '');
-        setBalance(profileRes.data.coins);
-      }
-    } catch (e) {
-      console.log('Error fetching profile data', e);
+  // Sync edit fields when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setEditName(profile.name || '');
+      setEditEmail(profile.email || '');
     }
-  };
+  }, [profile]);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('user_phone').then(p => { if (p) setPhone(p); });
+  }, []);
 
   const handleSave = async () => {
     if (!editName.trim()) {
@@ -57,10 +56,17 @@ export default function ProfileScreen({ navigation }: Props) {
       });
       Alert.alert('Success', 'Profile updated successfully! 🎉');
       setIsEditing(false);
-      fetchProfileData();
+      invalidateProfile(); // refresh cache
     } catch (e: any) {
       Alert.alert('Error', e.response?.data?.message || 'Update failed');
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
+    setRefreshing(false);
   };
 
   const handleLogout = async () => {
@@ -74,6 +80,7 @@ export default function ProfileScreen({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user_phone', 'hasSeenOnboarding']);
+            queryClient.clear(); // Clear all cached data on logout
             navigation.reset({
               index: 0,
               routes: [{ name: 'PhoneAuth' }],
@@ -83,6 +90,9 @@ export default function ProfileScreen({ navigation }: Props) {
       ]
     );
   };
+
+  const displayName = profile?.name || 'Player';
+  const displayBalance = balance ?? profile?.coins ?? 0;
 
   return (
     <View style={styles.container}>
@@ -99,7 +109,11 @@ export default function ProfileScreen({ navigation }: Props) {
         </TouchableOpacity>
       </Animated.View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
         {/* User Card */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <LinearGradient
@@ -111,7 +125,7 @@ export default function ProfileScreen({ navigation }: Props) {
             <View style={styles.avatarGlowRing}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
-                  {editName ? editName.charAt(0).toUpperCase() : 'P'}
+                  {(editName || displayName).charAt(0).toUpperCase()}
                 </Text>
               </View>
             </View>
@@ -146,7 +160,7 @@ export default function ProfileScreen({ navigation }: Props) {
             ) : (
               <View style={{ alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.userName}>{profile?.name || 'Player'}</Text>
+                  <Text style={styles.userName}>{displayName}</Text>
                   <TouchableOpacity onPress={() => setIsEditing(true)}>
                     <Ionicons name="create-outline" size={18} color={colors.primary} />
                   </TouchableOpacity>
@@ -158,7 +172,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
             <View style={styles.balanceBadge}>
               <Ionicons name="star" size={16} color={colors.secondary} />
-              <AnimatedNumber value={balance} style={styles.balanceText} suffix=" Coins" duration={800} />
+              <AnimatedNumber value={displayBalance} style={styles.balanceText} suffix=" Coins" duration={800} />
             </View>
           </LinearGradient>
         </Animated.View>
@@ -298,7 +312,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   try {
                     await api.streak.buyFreeze();
                     Alert.alert('Zabardast! 🧊', 'Streak freeze khareed liya gaya hai!');
-                    fetchProfileData();
+                    invalidateProfile();
                   } catch (e: any) {
                     Alert.alert('Error', e.response?.data?.message || 'Failed to buy freeze');
                   }

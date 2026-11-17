@@ -1,5 +1,5 @@
 // src/screens/HomeScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, ActivityIndicator,
@@ -10,12 +10,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import GlassCard from '../components/GlassCard';
 import BottomNav from '../components/BottomNav';
 import PulsingDot from '../components/PulsingDot';
 import AnimatedNumber from '../components/AnimatedNumber';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme/designSystem';
 import { api } from '../api/client';
+import {
+  useProfile, useCategories, useWalletBalance,
+  useStreakStatus, useLives, QUERY_KEYS,
+} from '../hooks/useAppData';
 
 type Category = { id: string; name: string; icon: string; isPremium: boolean };
 
@@ -35,7 +40,7 @@ const TOURNAMENT_SECONDS = 2 * 60 * 60 + 45 * 60 + 10;
 
 function useCountdown(initialSeconds: number) {
   const [seconds, setSeconds] = useState(initialSeconds);
-  useEffect(() => {
+  React.useEffect(() => {
     const t = setInterval(() => setSeconds(s => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
   }, []);
@@ -46,69 +51,46 @@ function useCountdown(initialSeconds: number) {
 }
 
 export default function HomeScreen({ navigation }: any) {
-  const [categories, setCategories] = useState<Category[]>(FALLBACK_CATEGORIES);
+  const queryClient = useQueryClient();
+
+  // ── Cached queries — instant on revisit, background refresh ──
+  const { data: profileData } = useProfile();
+  const { data: categoriesData } = useCategories();
+  const { data: balanceData } = useWalletBalance();
+  const { data: streakData } = useStreakStatus();
+  const { data: livesData } = useLives();
+
+  // Derived values with safe fallbacks
+  const categories: Category[] = categoriesData || FALLBACK_CATEGORIES;
+  const balance = balanceData ?? 0;
+  const userName = profileData?.name || 'Player';
+  const streak = streakData?.currentStreak || 0;
+  const tickets = profileData?.tournamentTickets || 0;
+  const lives = livesData?.lives ?? 5;
+  const userStats = {
+    wins: profileData?.stats?.challengesWon || 0,
+    played: profileData?.stats?.totalQuizzes || 0,
+    rank: profileData?.rank ? `#${profileData.rank}` : '#--',
+  };
+
   const [refreshing, setRefreshing] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [userName, setUserName] = useState('Player');
-  const [streak, setStreak] = useState(0);
-  const [tickets, setTickets] = useState(0);
-  const [lives, setLives] = useState(5);
-  const [userStats, setUserStats] = useState({ wins: 0, played: 0, rank: '#--' });
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const countdown = useCountdown(TOURNAMENT_SECONDS);
 
   const [adActive, setAdActive] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
   const [rewardAmount, setRewardAmount] = useState<number | null>(null);
   const [adLoading, setAdLoading] = useState(false);
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const walletScale = useSharedValue(1);
   const walletStyle = useAnimatedStyle(() => ({
     transform: [{ scale: walletScale.value }],
   }));
 
-  const fetchData = async () => {
-    try {
-      const results = await Promise.allSettled([
-        api.quiz.getCategories(),
-        api.wallet.getBalance(),
-        api.user.getProfile(),
-        api.streak.getStatus(),
-        api.bonus.getLives(),
-      ]);
-
-      const [catRes, walletRes, profileRes, streakRes, livesRes] = results;
-
-      if (catRes.status === 'fulfilled' && catRes.value?.data) {
-        setCategories(catRes.value.data);
-      }
-      if (walletRes.status === 'fulfilled' && walletRes.value?.data) {
-        setBalance(walletRes.value.data.balance ?? 0);
-      }
-      if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
-        const p = profileRes.value.data;
-        if (p.name) setUserName(p.name);
-        if (p.tournamentTickets !== undefined) setTickets(p.tournamentTickets);
-        setUserStats({
-          wins: p.stats?.challengesWon || 0,
-          played: p.stats?.totalQuizzes || 0,
-          rank: p.rank ? `#${p.rank}` : '#--',
-        });
-      }
-      if (streakRes.status === 'fulfilled' && streakRes.value?.data) {
-        setStreak(streakRes.value.data.currentStreak || 0);
-      }
-      if (livesRes.status === 'fulfilled' && livesRes.value?.data) {
-        setLives(livesRes.value.data.lives ?? 5);
-      }
-    } catch {}
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    // Invalidate all cached queries — triggers background refetch
+    await queryClient.invalidateQueries();
     setRefreshing(false);
   };
 
@@ -136,8 +118,8 @@ export default function HomeScreen({ navigation }: any) {
       const res = await api.ads.watch();
       const reward = res.data?.reward || 1;
       setRewardAmount(reward);
-      const walletRes = await api.wallet.getBalance();
-      setBalance(walletRes.data.balance);
+      // Refresh wallet balance in cache
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
     } catch (e: any) {
       console.log('Error claiming ad reward', e);
       setAdActive(false);

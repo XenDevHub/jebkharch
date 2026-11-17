@@ -13,6 +13,8 @@ import {
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/api/queryClient';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,10 +38,12 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <AppNavigator />
-      <StatusBar style="light" />
-    </SafeAreaView>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaView style={styles.safe}>
+        <AppNavigator />
+        <StatusBar style="light" />
+      </SafeAreaView>
+    </QueryClientProvider>
   );
 }
 
