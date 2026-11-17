@@ -98,7 +98,7 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
     try {
       await api.auth.requestOtp(phone);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Resend nahi ho paya');
+      setError(err.response?.data?.message || 'OTP dobara nahi bheja ja saka, thori der baad koshish karein');
     }
   };
 

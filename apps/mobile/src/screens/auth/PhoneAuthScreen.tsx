@@ -90,8 +90,16 @@ export default function PhoneAuthScreen({ navigation }: Props) {
   }));
 
   const handleSendOtp = async () => {
-    if (!phone || phone.length < 10) {
-      setError('Valid phone number dilen na bhai 😅');
+    // Sanitize phone number: strip spaces, dashes, parentheses
+    let clean = phone.replace(/[\s\-\(\)]/g, '');
+    if (clean.startsWith('+92')) clean = '0' + clean.slice(3);
+    else if (clean.startsWith('0092')) clean = '0' + clean.slice(4);
+    else if (clean.startsWith('92') && clean.length === 12) clean = '0' + clean.slice(2);
+    else if (!clean.startsWith('0')) clean = '0' + clean;
+
+    const PAKISTAN_PHONE_REGEX = /^03[0-9]{9}$/;
+    if (!PAKISTAN_PHONE_REGEX.test(clean)) {
+      setError('Bhai, sahi Pakistani phone number darj karein (e.g. 03001234567) 😅');
       errorShake.value = withSequence(
         withTiming(-10, { duration: 60 }),
         withTiming(10, { duration: 60 }),
@@ -104,11 +112,10 @@ export default function PhoneAuthScreen({ navigation }: Props) {
     setError('');
     setLoading(true);
     try {
-      const cleanPhone = phone.startsWith('0') ? phone : `0${phone}`;
-      await api.auth.requestOtp(cleanPhone);
-      navigation.navigate('OtpVerify', { phone: cleanPhone });
+      await api.auth.requestOtp(clean);
+      navigation.navigate('OtpVerify', { phone: clean });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'OTP pathate pareni, try koro again');
+      setError(err.response?.data?.message || 'OTP bhejne mein masla pesh aya, dobara koshish karein');
       errorShake.value = withSequence(
         withTiming(-10, { duration: 60 }), withTiming(10, { duration: 60 }),
         withTiming(-8, { duration: 60 }), withTiming(8, { duration: 60 }),
@@ -119,7 +126,7 @@ export default function PhoneAuthScreen({ navigation }: Props) {
     }
   };
 
-  const canSend = phone.length >= 10 && !loading;
+  const canSend = phone.replace(/[\s\-\(\)]/g, '').length >= 9 && !loading;
 
   return (
     <KeyboardAvoidingView
@@ -169,7 +176,7 @@ export default function PhoneAuthScreen({ navigation }: Props) {
               onChangeText={(t) => { setPhone(t); setError(''); }}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              maxLength={11}
+              maxLength={15}
             />
             {phone.length >= 10 && (
               <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
@@ -208,7 +215,7 @@ export default function PhoneAuthScreen({ navigation }: Props) {
           </TouchableOpacity>
 
           <Text style={styles.disclaimer}>
-            Continue kore aap hamare Terms & Privacy se agree karte hain
+            Aage barh kar aap hamare Terms & Privacy se ittefaq karte hain
           </Text>
         </Animated.View>
       </View>
