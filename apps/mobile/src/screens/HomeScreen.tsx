@@ -21,6 +21,7 @@ import {
   useProfile, useCategories, useWalletBalance,
   useStreakStatus, useLives, QUERY_KEYS,
 } from '../hooks/useAppData';
+import { AdMobManager } from '../services/adMobService';
 
 type Category = { id: string; name: string; icon: string; isPremium: boolean };
 
@@ -96,6 +97,28 @@ export default function HomeScreen({ navigation }: any) {
 
   const watchAd = async () => {
     if (adLoading || adActive) return;
+
+    // Check if real AdMob Rewarded Ad is loaded
+    if (AdMobManager.isAdReady()) {
+      AdMobManager.showRewardedAd(
+        () => {
+          // User earned reward
+          triggerAdReward();
+        },
+        undefined,
+        () => {
+          // If AdMob fails, fallback to timer
+          startAdTimerFallback();
+        }
+      );
+      return;
+    }
+
+    // Fallback timer if AdMob isn't loaded yet
+    startAdTimerFallback();
+  };
+
+  const startAdTimerFallback = () => {
     setAdCountdown(5);
     setAdActive(true);
     setRewardAmount(null);
@@ -153,17 +176,17 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-            <TouchableOpacity style={styles.walletChip}>
+            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Spin')}>
               <Text style={{ fontSize: 14 }}>❤️</Text>
               <Text style={styles.walletText}>{lives}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.walletChip}>
+            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Missions')}>
               <Text style={{ fontSize: 14 }}>🔥</Text>
               <Text style={styles.walletText}>{streak}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.walletChip}>
+            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Missions')}>
               <Text style={{ fontSize: 14 }}>🎟️</Text>
               <Text style={styles.walletText}>{tickets}</Text>
             </TouchableOpacity>
@@ -214,7 +237,19 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* ── Daily Challenge Banner ── */}
         <Animated.View entering={FadeInDown.delay(100)}>
-          <TouchableOpacity activeOpacity={0.9} style={styles.dailyCard}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.dailyCard}
+            onPress={() => {
+              const dailyCat = categories.find((c: any) => !c.isPremium) || categories[0];
+              if (dailyCat) {
+                navigation.navigate('Quiz', {
+                  categoryId: dailyCat.id,
+                  categoryName: `${dailyCat.name} (Daily Challenge)`,
+                });
+              }
+            }}
+          >
             <LinearGradient
               colors={[`${colors.secondary}25`, `${colors.secondary}08`]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -227,7 +262,13 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={styles.dailyTitle}>Daily Challenge</Text>
                 <Text style={styles.dailySubtitle}>Aaj ka special quiz — double rewards!</Text>
               </View>
-              <Text style={{ fontSize: 44 }}>🎯</Text>
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 36 }}>🎯</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <Text style={{ ...typography.labelSm, color: colors.secondary, fontSize: 11, fontWeight: '700' }}>Play</Text>
+                  <Ionicons name="arrow-forward" size={12} color={colors.secondary} />
+                </View>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>

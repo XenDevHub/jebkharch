@@ -15,6 +15,8 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/api/queryClient';
+import { registerForPushNotificationsAsync, setupNotificationListeners } from './src/services/notificationService';
+import { AdMobManager } from './src/services/adMobService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,8 +32,16 @@ export default function App() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      // Initialize Push Notifications & AdMob preload
+      registerForPushNotificationsAsync().catch(() => null);
+      AdMobManager.preloadRewardedAd();
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    const cleanup = setupNotificationListeners();
+    return cleanup;
+  }, []);
 
   if (!fontsLoaded) {
     return null;

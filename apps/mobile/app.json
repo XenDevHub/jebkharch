@@ -13,10 +13,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "pk.jebkharch.app"
+      "bundleIdentifier": "com.jebkharch.app"
     },
     "android": {
-      "package": "pk.jebkharch.app",
+      "package": "com.jebkharch.app",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
@@ -29,7 +30,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "API_URL": "http://109.199.122.238:3000/api",
+      "API_URL": "https://api.jaibkharch.com/api",
       "eas": {
         "projectId": "f35ea800-64d3-4dd8-99cb-601b43d672b0"
       }
@@ -43,7 +44,21 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#00d084"
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "owner": "xentro_info_tech"
   }

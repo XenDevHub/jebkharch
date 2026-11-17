@@ -7,8 +7,9 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api } from '../api/client';
+import { useQueryClient } from '@tanstack/react-query';
 import BottomNav from '../components/BottomNav';
+import { useLeaderboard, QUERY_KEYS } from '../hooks/useAppData';
 
 type LeaderboardItem = {
   rank: number;
@@ -41,31 +42,14 @@ function PodiumBlock({ height, color, rank, label }: { height: number; color: st
 }
 
 export default function LeaderboardScreen({ navigation }: Props) {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: leaderboard = [], isLoading: loading } = useLeaderboard();
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await api.user.getLeaderboard();
-      if (res.data) {
-        setLeaderboard(res.data);
-      }
-    } catch (e) {
-      console.log('Error fetching leaderboard', e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLeaderboard();
-  }, []);
-
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchLeaderboard();
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.leaderboard });
+    setRefreshing(false);
   };
 
   const top3 = leaderboard.slice(0, 3);
@@ -104,7 +88,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
         <View style={{ width: 40 }} />
       </Animated.View>
 
-      {loading ? (
+      {loading && leaderboard.length === 0 ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>

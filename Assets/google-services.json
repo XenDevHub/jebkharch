@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "361560880593",
+    "project_id": "jaibkharch-4dad5",
+    "storage_bucket": "jaibkharch-4dad5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:361560880593:android:153875491a810e0f775cf0",
+        "android_client_info": {
+          "package_name": "com.jebkharch.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAL5p1OOaWrzO6L2yWx-6XGsDSQXssWvo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:361560880593:android:153875491a810e0f775cf0",
+        "android_client_info": {
+          "package_name": "pk.jebkharch.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAL5p1OOaWrzO6L2yWx-6XGsDSQXssWvo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

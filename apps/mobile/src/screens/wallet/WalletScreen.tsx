@@ -16,6 +16,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme/designSystem';
 import { api } from '../../api/client';
 import AnimatedNumber from '../../components/AnimatedNumber';
+import { useWalletBalance, useInvalidateQueries } from '../../hooks/useAppData';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Wallet'>;
@@ -24,7 +25,10 @@ type Props = {
 const QUICK_AMOUNTS = [100, 500, 1000, 2000];
 
 export default function WalletScreen({ navigation }: Props) {
-  const [balance, setBalance] = useState<number | null>(null);
+  // ── Cached balance — instant on revisit ──
+  const { data: balance = null } = useWalletBalance();
+  const { invalidateBalance } = useInvalidateQueries();
+
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,19 +38,10 @@ export default function WalletScreen({ navigation }: Props) {
   const phoneBorder = useSharedValue(0);
   const btnScale = useSharedValue(1);
 
-  useEffect(() => { fetchBalance(); }, []);
-
   useEffect(() => {
     amountBorder.value = withTiming(focusedField === 'amount' ? 1 : 0, { duration: 200 });
     phoneBorder.value = withTiming(focusedField === 'phone' ? 1 : 0, { duration: 200 });
   }, [focusedField]);
-
-  const fetchBalance = async () => {
-    try {
-      const res = await api.wallet.getBalance();
-      setBalance(res.data.balance);
-    } catch {}
-  };
 
   const handleWithdraw = async () => {
     const amt = parseInt(amount, 10);
@@ -67,9 +62,10 @@ export default function WalletScreen({ navigation }: Props) {
     try {
       const res = await api.wallet.requestWithdrawal(amt, phone);
       if (res.data.success) {
-        setBalance(res.data.newBalance);
         setAmount('');
         setPhone('');
+        // Refresh cached balance
+        invalidateBalance();
         Alert.alert('✅ Request Submitted!', `Your withdrawal of ${amt} Coins has been submitted. Processing in 24-48 hours.`);
       }
     } catch (e: any) {

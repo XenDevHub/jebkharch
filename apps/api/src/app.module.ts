@@ -18,6 +18,7 @@ import { TicketsModule } from './tickets/tickets.module';
 import { WrongAnswersModule } from './wrong-answers/wrong-answers.module';
 import { BonusModule } from './bonus/bonus.module';
 import { TeamModule } from './team/team.module';
+import { NotificationModule } from './notification/notification.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -61,6 +62,7 @@ import { AppController } from './app.controller';
     WrongAnswersModule,
     BonusModule,
     TeamModule,
+    NotificationModule,
 
     // ── Admin ─────────────────────────────────────────────────────────────
     AdminModule,

@@ -1,46 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { colors, spacing, typography, borderRadius } from '../theme/designSystem';
 import { api } from '../api/client';
+import { useMissions, useAchievements, QUERY_KEYS, useInvalidateQueries } from '../hooks/useAppData';
 
 export default function MissionsScreen({ navigation }: any) {
+  const queryClient = useQueryClient();
+  const { invalidateMissions, invalidateBalance, invalidateProfile } = useInvalidateQueries();
+
   const [activeTab, setActiveTab] = useState<'missions' | 'achievements'>('missions');
-  const [missions, setMissions] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // ── Cached queries — instant on revisit ──
+  const { data: missions = [], isLoading: missionsLoading } = useMissions();
+  const { data: achievements = [], isLoading: achievementsLoading } = useAchievements();
 
-  const fetchData = async () => {
-    try {
-      const [missionsRes, achRes] = await Promise.all([
-        api.missions.getMissions(),
-        api.missions.getAchievements(),
-      ]);
-      setMissions(missionsRes.data || []);
-      setAchievements(achRes.data || []);
-    } catch (e) {
-      console.log('Error fetching missions/achievements', e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const loading = missionsLoading && achievements.length === 0 && missions.length === 0;
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchData();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.missions }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.achievements }),
+    ]);
+    setRefreshing(false);
   };
 
   const claimReward = async (id: string) => {
     try {
       const res = await api.missions.claimMission(id);
       Alert.alert('Mubarak!', `Aap ko ${res.data.rewardCoins} coins reward mila!`);
-      fetchData();
+      invalidateMissions();
+      invalidateBalance();
+      invalidateProfile();
     } catch (e: any) {
       Alert.alert('Notice', e.response?.data?.message || 'Reward claim nahi ho saka.');
     }
@@ -55,10 +49,10 @@ export default function MissionsScreen({ navigation }: any) {
   }
 
   const claimableCount = missions.filter(
-    (um) => um.progress >= um.mission.targetValue && um.status !== 'COMPLETED'
+    (um: any) => um.progress >= um.mission.targetValue && um.status !== 'COMPLETED'
   ).length;
 
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const unlockedCount = achievements.filter((a: any) => a.unlocked).length;
 
   return (
     <View style={styles.container}>
@@ -102,7 +96,7 @@ export default function MissionsScreen({ navigation }: any) {
               <Text style={styles.emptyDesc}>Naye missions jald hi dastyab honge!</Text>
             </View>
           ) : (
-            missions.map((um) => {
+            missions.map((um: any) => {
               const m = um.mission;
               const isComplete = um.progress >= m.targetValue;
               const isClaimed = um.status === 'COMPLETED';
@@ -162,7 +156,7 @@ export default function MissionsScreen({ navigation }: any) {
             <Text style={styles.emptyDesc}>Quiz khel kar achievements unlock karein!</Text>
           </View>
         ) : (
-          achievements.map((a) => {
+          achievements.map((a: any) => {
             return (
               <View
                 key={a.id}
