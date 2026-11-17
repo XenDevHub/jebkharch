@@ -49,7 +49,7 @@ export default function ReferralScreen({ navigation }: any) {
           </Text>
 
           <View style={styles.codeBox}>
-            <Text style={styles.codeText}>{referralData?.code || 'ERROR'}</Text>
+            <Text style={styles.codeText}>{referralData?.code || 'LOADING...'}</Text>
           </View>
           
           <TouchableOpacity style={styles.shareBtn} onPress={() => Alert.alert('Copied!', 'Referral code copied to clipboard.')}>

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Ban, CheckCircle2, ShieldAlert, RefreshCw, ChevronLeft, ChevronRight, UserCheck, Phone, Coins, Award, Calendar } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://109.199.122.238:3000/api';
+const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
 async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || localStorage.getItem('accessToken') || '';
   const res = await fetch(`${API}${path}`, {
     ...options,
     headers: {
@@ -43,12 +43,8 @@ export default function UsersList() {
       setUsers(res.data || []);
       setTotalPages(res.totalPages || 1);
     } catch (err) {
-      // Fallback mock data if server unavailable
-      setUsers([
-        { id: 'usr-1', phone: '+923001234567', name: 'Zain Ahmed', coins: 14500, xp: 820, isBanned: false, isFlagged: false, fraudScore: 0, createdAt: new Date().toISOString() },
-        { id: 'usr-2', phone: '+923129876543', name: 'Tariq Mehmood', coins: 89000, xp: 4500, isBanned: true, isFlagged: true, fraudScore: 85, createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
-        { id: 'usr-3', phone: '+923335557788', name: 'Ayesha Khan', coins: 3200, xp: 210, isBanned: false, isFlagged: false, fraudScore: 5, createdAt: new Date(Date.now() - 86400000 * 7).toISOString() },
-      ]);
+      console.error('Failed to fetch real users:', err);
+      setUsers([]);
       setTotalPages(1);
     } finally {
       setLoading(false);

@@ -24,6 +24,12 @@ export class ReferralController {
     return this.referralService.getMyCode(userId);
   }
 
+  @Get('my-code')
+  @ApiOperation({ summary: 'Get my referral code and stats (alias)' })
+  getMyCode(@CurrentUser('id') userId: string) {
+    return this.referralService.getMyCode(userId);
+  }
+
   @Post('apply')
   @ApiOperation({ summary: 'Apply a friend\'s referral code (post-signup)' })
   apply(@CurrentUser('id') userId: string, @Body() dto: ApplyReferralDto) {

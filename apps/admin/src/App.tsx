@@ -14,11 +14,23 @@ import MissionsAdmin from './pages/MissionsAdmin';
 import TeamsAdmin from './pages/TeamsAdmin';
 import SeasonsAdmin from './pages/SeasonsAdmin';
 import NotificationsAdmin from './pages/NotificationsAdmin';
+import AdminLoginModal from './components/AdminLoginModal';
 
 export default function App() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [token, setToken] = useState(() => localStorage.getItem('token') || localStorage.getItem('adminToken') || '');
+  const [loginModalOpen, setLoginModalOpen] = useState(!token);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    setToken('');
+    setLoginModalOpen(true);
+  };
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -175,7 +187,8 @@ export default function App() {
             </div>
           </div>
           <button
-            title="Sign out"
+            onClick={handleLogout}
+            title={token ? 'Sign out' : 'Sign in'}
             aria-label="Sign out"
             className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
           >
@@ -373,6 +386,16 @@ export default function App() {
           </button>
         </nav>
       </div>
+
+      <AdminLoginModal
+        isOpen={loginModalOpen}
+        onSuccess={() => {
+          setToken(localStorage.getItem('token') || '');
+          setLoginModalOpen(false);
+          window.location.reload();
+        }}
+        onClose={() => setLoginModalOpen(false)}
+      />
     </div>
   );
 }

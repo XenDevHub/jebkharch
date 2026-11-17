@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Target, CheckCircle, Clock, Plus, Trash2, RefreshCw, X, Coins, Ticket } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://109.199.122.238:3000/api';
+const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
 async function apiFetch(path: string, opts: RequestInit = {}) {
-  const token = localStorage.getItem('token') || localStorage.getItem('admin_token') || '';
+  const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || localStorage.getItem('accessToken') || '';
   const res = await fetch(`${API}${path}`, {
     ...opts,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...opts.headers },

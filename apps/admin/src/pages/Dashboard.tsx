@@ -5,11 +5,12 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const API = import.meta.env.VITE_API_URL || 'http://109.199.122.238:3000/api';
+const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
 async function apiFetch(path: string) {
+  const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || localStorage.getItem('accessToken') || '';
   const res = await fetch(`${API}${path}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('API fetch failed');
   return res.json();
@@ -25,12 +26,12 @@ export default function Dashboard() {
       const res = await apiFetch('/admin/analytics');
       setData(res);
     } catch (e) {
-      // Fallback mock for demonstration if server offline
+      console.error('Failed to load real analytics:', e);
       setData({
-        users: { total: 1420, dauToday: 382, dauYesterday: 310, flagged: 4 },
-        quizzes: { totalSessions: 8940, completedSessions: 7820 },
-        withdrawals: { total: 142, pending: 8 },
-        economy: { totalCoinsInCirculation: 4850000 },
+        users: { total: 0, dauToday: 0, dauYesterday: 0, flagged: 0 },
+        quizzes: { totalSessions: 0, completedSessions: 0 },
+        withdrawals: { total: 0, pending: 0 },
+        economy: { totalCoinsInCirculation: 0 },
       });
     } finally {
       setLoading(false);

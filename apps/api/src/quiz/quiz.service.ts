@@ -120,7 +120,7 @@ export class QuizService {
       totalQuestions: QUIZ_CONSTANTS.QUESTIONS_PER_SESSION,
       timePerQuestion: QUIZ_CONSTANTS.TIME_PER_QUESTION_SECONDS,
       coinsSpent: COIN_CONSTANTS.NORMAL_QUIZ_ENTRY,
-      questions: questions.map((q) => ({
+      questions: questions.map((q: any) => ({
         id: q.id,
         questionText: q.questionText,
         imageUrl: q.imageUrl,
@@ -172,7 +172,7 @@ export class QuizService {
       data: { usageCount: { increment: 1 } },
     });
 
-    return { isCorrect };
+    return { isCorrect, correctAnswer: question.correctAnswer };
   }
 
   // ── Finish Quiz ───────────────────────────────────────────────────────────

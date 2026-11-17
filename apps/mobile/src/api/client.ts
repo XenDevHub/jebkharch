@@ -260,7 +260,7 @@ export const api = {
     markMastered: async (id: string) => apiClient.post(`/wrong-answers/${id}/master`),
   },
   referral: {
-    getMyCode: async () => apiClient.get('/referral/my-code'),
+    getMyCode: async () => apiClient.get('/referral/code'),
     applyCode: async (referralCode: string, deviceId?: string) => apiClient.post('/referral/apply', { referralCode, deviceId }),
   },
   bonus: {

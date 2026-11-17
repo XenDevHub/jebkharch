@@ -13,7 +13,7 @@ import { api } from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In dev, use the same API URL base but replace http with ws for websockets
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://109.199.122.238:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.jaibkharch.com/api';
 const SOCKET_URL = `${API_URL.replace('/api', '')}/challenge`;
 
 export default function ChallengeLobbyScreen({ navigation }: any) {

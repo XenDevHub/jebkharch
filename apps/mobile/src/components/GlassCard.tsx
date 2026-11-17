@@ -20,6 +20,13 @@ type GlassCardProps = {
   delay?: number;
 };
 
+// Check if the icon is an emoji (non-ASCII) or an Ionicons name
+const isEmoji = (str?: string) => {
+  if (!str) return false;
+  // Ionicons names are ASCII-only lowercase strings like 'football', 'flask'
+  return !/^[a-z0-9-]+$/.test(str);
+};
+
 export default function GlassCard({ title, icon, onPress, isPremium, delay = 0 }: GlassCardProps) {
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
@@ -84,12 +91,16 @@ export default function GlassCard({ title, icon, onPress, isPremium, delay = 0 }
                 { backgroundColor: isPremium ? `${colors.secondary}20` : `${colors.primary}20` },
               ]}
             >
-              {icon && (
+              {icon && isEmoji(icon) ? (
+                <Text style={{ fontSize: 24 }}>{icon}</Text>
+              ) : icon ? (
                 <Ionicons
                   name={icon as any}
                   size={24}
                   color={isPremium ? colors.secondary : colors.primary}
                 />
+              ) : (
+                <Text style={{ fontSize: 24 }}>🎯</Text>
               )}
             </View>
             {isPremium && (

@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated, {
-  FadeInRight, FadeOutLeft,
+  FadeInRight, FadeOutLeft, FadeInDown,
   useSharedValue, useAnimatedStyle,
-  withTiming, withSpring, withSequence,
+  withTiming, withSpring, withSequence, withRepeat,
   Easing, interpolate, Extrapolation,
 } from 'react-native-reanimated';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,6 +18,121 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Quiz'>;
 
 const QUESTION_TIME = 15;
 
+const LOADING_TIPS = [
+  'Har sahi jawab pe milte hain coins! 🏆',
+  'Jaldi jawab dene par milta hai streak bonus! 🔥',
+  'Galat jawab se ghabrana nahi, seekhte raho! 💡',
+  'Leaderboard pe aane ke liye daily khelo! ⚡',
+];
+
+function QuizLoadingView({ categoryName }: { categoryName: string }) {
+  const pulseScale = useSharedValue(1);
+  const rotateVal = useSharedValue(0);
+  const glowOpacity = useSharedValue(0.4);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withSequence(
+        withSpring(1.15, { damping: 6, stiffness: 100 }),
+        withSpring(1, { damping: 8, stiffness: 120 })
+      ),
+      -1,
+      true
+    );
+
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.85, { duration: 1000 }),
+        withTiming(0.3, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+
+    rotateVal.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(8, { duration: 800, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    const interval = setInterval(() => {
+      setTipIndex((i) => (i + 1) % LOADING_TIPS.length);
+    }, 2400);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const iconAnimStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: pulseScale.value },
+      { rotate: `${rotateVal.value}deg` },
+    ],
+  }));
+
+  const glowAnimStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: pulseScale.value * 1.25 }],
+  }));
+
+  return (
+    <View style={styles.loadingContainer}>
+      <LinearGradient
+        colors={['#060c18', '#0c1b33', '#060c18']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.loadingCard}>
+        {/* Glowing Aura Ring */}
+        <Animated.View style={[styles.loadingGlowCircle, glowAnimStyle]} />
+
+        {/* Animated Badge */}
+        <Animated.View style={[styles.loadingIconWrap, iconAnimStyle]}>
+          <LinearGradient
+            colors={[`${colors.primary}50`, `${colors.primary}15`]}
+            style={styles.loadingIconBg}
+          >
+            <Text style={{ fontSize: 52 }}>⚡</Text>
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Category Pill */}
+        <View style={styles.loadingCategoryBadge}>
+          <Text style={{ fontSize: 13 }}>📚</Text>
+          <Text style={styles.loadingCategoryText}>{categoryName}</Text>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.loadingMainTitle}>Taiyyar Ho Jao!</Text>
+        <Text style={styles.loadingSubtitle}>Questions load ho rahe hain</Text>
+
+        {/* Meta Info */}
+        <View style={styles.loadingMetaRow}>
+          <View style={styles.loadingMetaPill}>
+            <Ionicons name="help-circle-outline" size={14} color={colors.primary} />
+            <Text style={styles.loadingMetaText}>10 Questions</Text>
+          </View>
+          <View style={styles.loadingMetaPill}>
+            <Ionicons name="time-outline" size={14} color={colors.secondary} />
+            <Text style={styles.loadingMetaText}>15s Per Question</Text>
+          </View>
+        </View>
+
+        <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: spacing.md }} />
+
+        {/* Dynamic Tip */}
+        <View style={styles.loadingTipWrap}>
+          <Text style={styles.loadingTipLabel}>PRO TIP</Text>
+          <Text style={styles.loadingTipText}>{LOADING_TIPS[tipIndex]}</Text>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
 export default function QuizScreen({ route, navigation }: Props) {
   const { categoryId, categoryName } = route.params;
   const [loading, setLoading] = useState(true);
@@ -26,6 +141,7 @@ export default function QuizScreen({ route, navigation }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [revealedCorrectAnswer, setRevealedCorrectAnswer] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [streak, setStreak] = useState(0);
@@ -97,8 +213,12 @@ export default function QuizScreen({ route, navigation }: Props) {
     setProcessing(true);
     try {
       const res = await api.quiz.submitAnswer(sessionId, questions[currentIndex].id, optionId);
-      const correct = res.data.correct;
+      const correct = res.data.isCorrect ?? res.data.correct ?? false;
+      const correctAns = res.data.correctAnswer;
       setIsCorrect(correct);
+      if (correctAns) {
+        setRevealedCorrectAnswer(correctAns);
+      }
       if (correct) {
         setStreak(s => s + 1);
         scoreScale.value = withSequence(
@@ -108,7 +228,7 @@ export default function QuizScreen({ route, navigation }: Props) {
       } else {
         setStreak(0);
       }
-      setTimeout(() => goNext(), 1100);
+      setTimeout(() => goNext(), 1200);
     } catch {
       setProcessing(false);
     }
@@ -120,6 +240,7 @@ export default function QuizScreen({ route, navigation }: Props) {
       setCurrentIndex(nextIdx);
       setSelectedOption(null);
       setIsCorrect(null);
+      setRevealedCorrectAnswer(null);
       setProcessing(false);
       timerAnim.value = 1;
       progressAnim.value = withTiming((nextIdx + 1) / questions.length, { duration: 400 });
@@ -150,12 +271,7 @@ export default function QuizScreen({ route, navigation }: Props) {
   }));
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Questions load ho rahi hain...</Text>
-      </View>
-    );
+    return <QuizLoadingView categoryName={categoryName} />;
   }
 
   if (questions.length === 0) {
@@ -228,17 +344,36 @@ export default function QuizScreen({ route, navigation }: Props) {
       <View style={styles.optionsContainer}>
         {currentQ.options.map((opt: any, i: number) => {
           const isSelected = selectedOption === opt.id;
+          const isRevealedCorrect = revealedCorrectAnswer === opt.id;
           let bgColors: [string, string] = [`${colors.surfaceVariant}80`, colors.surfaceCard];
           let borderColor = colors.glassBorder;
+          let letterBg = colors.surfaceVariant;
+          let letterColor = colors.onSurfaceVariant;
 
           if (isSelected) {
             if (isCorrect === true) {
-              bgColors = [`${colors.primary}40`, `${colors.primary}20`];
+              bgColors = [`${colors.primary}45`, `${colors.primary}20`];
               borderColor = colors.primary;
+              letterBg = colors.primary;
+              letterColor = colors.onPrimary;
             } else if (isCorrect === false) {
-              bgColors = [`${colors.error}40`, `${colors.error}20`];
+              bgColors = [`${colors.error}45`, `${colors.error}20`];
               borderColor = colors.error;
+              letterBg = colors.error;
+              letterColor = colors.white;
+            } else {
+              // Immediately show selected state while API response is in-flight
+              bgColors = [`${colors.primary}35`, `${colors.primary}15`];
+              borderColor = colors.primary;
+              letterBg = `${colors.primary}80`;
+              letterColor = colors.white;
             }
+          } else if (isRevealedCorrect && isCorrect === false) {
+            // Highlight the true correct answer when user picked the wrong one
+            bgColors = [`${colors.primary}40`, `${colors.primary}18`];
+            borderColor = colors.primary;
+            letterBg = colors.primary;
+            letterColor = colors.onPrimary;
           }
 
           return (
@@ -252,19 +387,28 @@ export default function QuizScreen({ route, navigation }: Props) {
               <LinearGradient
                 colors={bgColors}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={[styles.optionCard, { borderColor }]}
+                style={[
+                  styles.optionCard,
+                  { borderColor },
+                  isSelected && styles.optionCardSelected,
+                ]}
               >
-                <View style={styles.optionLetter}>
-                  <Text style={styles.optionLetterText}>
+                <View style={[styles.optionLetter, { backgroundColor: letterBg }]}>
+                  <Text style={[styles.optionLetterText, { color: letterColor }]}>
                     {['A', 'B', 'C', 'D'][i]}
                   </Text>
                 </View>
-                <Text style={styles.optionText}>{opt.text}</Text>
-                {isSelected && isCorrect === true && (
-                  <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
+                <Text style={[styles.optionText, isSelected && { color: colors.white, fontWeight: '600' }]}>
+                  {opt.text}
+                </Text>
+                {isSelected && isCorrect === null && (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                )}
+                {((isSelected && isCorrect === true) || (isRevealedCorrect && isCorrect === false)) && (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                 )}
                 {isSelected && isCorrect === false && (
-                  <Ionicons name="close-circle" size={22} color={colors.error} />
+                  <Ionicons name="close-circle" size={24} color={colors.error} />
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -348,6 +492,14 @@ const styles = StyleSheet.create({
     padding: spacing.md, borderRadius: borderRadius.lg,
     borderWidth: 1.5, gap: spacing.sm,
   },
+  optionCardSelected: {
+    borderWidth: 2,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   optionLetter: {
     width: 32, height: 32, borderRadius: 8,
     backgroundColor: colors.surfaceVariant,
@@ -355,4 +507,122 @@ const styles = StyleSheet.create({
   },
   optionLetterText: { ...typography.labelSm, color: colors.onSurfaceVariant },
   optionText: { ...typography.bodyMd, color: colors.white, flex: 1 },
+
+  // Loading Screen Styles
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  loadingCard: {
+    width: '100%',
+    alignItems: 'center',
+    padding: spacing.xl,
+    borderRadius: borderRadius.xxl,
+    borderWidth: 1,
+    borderColor: colors.glassBorderBright,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    gap: spacing.sm,
+  },
+  loadingGlowCircle: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    top: 40,
+    backgroundColor: `${colors.primary}25`,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 30,
+    elevation: 8,
+  },
+  loadingIconWrap: {
+    marginBottom: spacing.xs,
+  },
+  loadingIconBg: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: `${colors.primary}70`,
+  },
+  loadingCategoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: borderRadius.pill,
+    backgroundColor: `${colors.secondary}20`,
+    borderWidth: 1,
+    borderColor: `${colors.secondary}50`,
+    marginTop: spacing.xs,
+  },
+  loadingCategoryText: {
+    ...typography.labelSm,
+    color: colors.secondary,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  loadingMainTitle: {
+    ...typography.headlineMd,
+    color: colors.white,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  loadingSubtitle: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  loadingMetaRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  loadingMetaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  loadingMetaText: {
+    ...typography.labelSm,
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+  },
+  loadingTipWrap: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: `${colors.surfaceVariant}90`,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    alignItems: 'center',
+    width: '100%',
+    gap: 4,
+  },
+  loadingTipLabel: {
+    ...typography.labelSm,
+    color: colors.primary,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    fontSize: 10,
+  },
+  loadingTipText: {
+    ...typography.bodySm,
+    color: colors.white,
+    textAlign: 'center',
+    fontSize: 12,
+  },
 });

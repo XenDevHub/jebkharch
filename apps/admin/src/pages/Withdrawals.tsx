@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Check, X, CreditCard, Wallet, ShieldCheck, ChevronLeft, ChevronRight, RefreshCw, AlertTriangle, Calendar, Copy, CheckCheck } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'http://109.199.122.238:3000/api';
+const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
 async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || localStorage.getItem('accessToken') || '';
   const res = await fetch(`${API}${path}`, {
     ...options,
     headers: {
@@ -44,29 +44,8 @@ export default function Withdrawals() {
       setWithdrawals(res.data || []);
       setTotalPages(res.totalPages || 1);
     } catch (err) {
-      // Fallback mock if API offline
-      setWithdrawals([
-        {
-          id: 'w-101',
-          userId: 'usr-1',
-          easypaisaNumber: '03001234567',
-          coins: 5000,
-          amount: 50,
-          status: statusFilter,
-          createdAt: new Date().toISOString(),
-          user: { name: 'Zain Ahmed', phone: '03001234567', fraudScore: 0 },
-        },
-        {
-          id: 'w-102',
-          userId: 'usr-2',
-          easypaisaNumber: '03129876543',
-          coins: 20000,
-          amount: 200,
-          status: statusFilter,
-          createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-          user: { name: 'Tariq Mehmood', phone: '03129876543', fraudScore: 45 },
-        },
-      ]);
+      console.error('Failed to fetch real withdrawals:', err);
+      setWithdrawals([]);
       setTotalPages(1);
     } finally {
       setLoading(false);

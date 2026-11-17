@@ -55,10 +55,13 @@ export const spacing = {
 export const typography = {
   displayLg: { fontFamily: 'Sora_700Bold', fontSize: 40, fontWeight: '700' as const, lineHeight: 48 },
   displayMd: { fontFamily: 'Sora_700Bold', fontSize: 32, fontWeight: '700' as const, lineHeight: 40 },
+  displaySm: { fontFamily: 'Sora_700Bold', fontSize: 26, fontWeight: '700' as const, lineHeight: 34 },
   headlineMd: { fontFamily: 'Sora_600SemiBold', fontSize: 24, fontWeight: '600' as const, lineHeight: 32 },
   headlineSm: { fontFamily: 'Sora_600SemiBold', fontSize: 18, fontWeight: '600' as const, lineHeight: 26 },
   bodyLg: { fontFamily: 'Inter_400Regular', fontSize: 18, fontWeight: '400' as const, lineHeight: 28 },
   bodyMd: { fontFamily: 'Inter_400Regular', fontSize: 15, fontWeight: '400' as const, lineHeight: 22 },
+  bodySm: { fontFamily: 'Inter_400Regular', fontSize: 13, fontWeight: '400' as const, lineHeight: 18 },
+  labelLg: { fontFamily: 'Inter_600SemiBold', fontSize: 16, fontWeight: '600' as const, lineHeight: 22 },
   labelMd: { fontFamily: 'Inter_600SemiBold', fontSize: 14, fontWeight: '600' as const, lineHeight: 20 },
   labelSm: { fontFamily: 'Inter_600SemiBold', fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
 };

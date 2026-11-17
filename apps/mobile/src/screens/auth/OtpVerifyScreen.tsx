@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import Animated, {
   FadeInDown, FadeInUp,
@@ -108,85 +108,96 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <LinearGradient colors={['#070d1a', '#091520', '#070d1a']} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.content}>
-        {/* Back button */}
-        <Animated.View entering={FadeInDown.delay(50)}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Header */}
-        <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.header}>
-          <View style={styles.iconWrap}>
-            <LinearGradient
-              colors={[`${colors.secondary}30`, `${colors.secondary}10`]}
-              style={styles.iconBg}
-            >
-              <Text style={{ fontSize: 44 }}>🔐</Text>
-            </LinearGradient>
-            <View style={styles.iconGlow} />
-          </View>
-          <Text style={styles.title}>Verification</Text>
-          <Text style={styles.subtitle}>
-            <Text style={{ color: colors.primary }}>{phone}</Text>
-            {'\n'}pe bheja gaya 6-digit code dalo
-          </Text>
-        </Animated.View>
-
-        {/* Hidden TextInput for native keyboard handling */}
-        <TextInput
-          ref={hiddenInputRef}
-          style={styles.hiddenInput}
-          value={otpText}
-          onChangeText={handleOtpChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          keyboardType="number-pad"
-          maxLength={OTP_LENGTH}
-          autoFocus
-          caretHidden
-          secureTextEntry={false}
-        />
-
-        {/* Visual OTP Boxes */}
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => hiddenInputRef.current?.focus()}
-        >
-          <Animated.View
-            entering={FadeInUp.delay(300).springify().damping(16)}
-            style={[styles.otpRow, shakeStyle]}
-          >
-            {Array(OTP_LENGTH)
-              .fill(0)
-              .map((_, index) => {
-                const digit = otpText[index] || '';
-                const isCurrentFocused = isFocused && (otpText.length === index || (otpText.length === OTP_LENGTH && index === OTP_LENGTH - 1));
-                const isFilled = digit !== '';
-                return (
-                  <View key={index} style={styles.otpBoxWrapper}>
-                    {isCurrentFocused && <View style={styles.otpFocusBg} />}
-                    <View
-                      style={[
-                        styles.otpBox,
-                        isCurrentFocused && styles.otpBoxFocused,
-                        isFilled && styles.otpBoxFilled,
-                        error ? styles.otpBoxError : {},
-                        { justifyContent: 'center', alignItems: 'center' },
-                      ]}
-                    >
-                      <Text style={styles.otpBoxText}>{digit}</Text>
-                    </View>
-                  </View>
-                );
-              })}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {/* Back button */}
+          <Animated.View entering={FadeInDown.delay(50)}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
+            </TouchableOpacity>
           </Animated.View>
-        </TouchableOpacity>
+
+          {/* Header */}
+          <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.header}>
+            <View style={styles.iconWrap}>
+              <LinearGradient
+                colors={[`${colors.secondary}30`, `${colors.secondary}10`]}
+                style={styles.iconBg}
+              >
+                <Text style={{ fontSize: 44 }}>🔐</Text>
+              </LinearGradient>
+              <View style={styles.iconGlow} />
+            </View>
+            <Text style={styles.title}>Verification</Text>
+            <Text style={styles.subtitle}>
+              <Text style={{ color: colors.primary }}>{phone}</Text>
+              {'\n'}pe bheja gaya 6-digit code dalo
+            </Text>
+
+            {/* Test Mode Mock OTP Quick-Fill Pill */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleOtpChange('123456')}
+              style={styles.testBadge}
+            >
+              <Text style={styles.testBadgeText}>⚡ Test Mode OTP: 123456 (Tap to fill)</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Visual OTP Boxes with overlay TextInput */}
+          <View style={styles.otpBoxesContainer}>
+            <TextInput
+              ref={hiddenInputRef}
+              style={styles.hiddenInput}
+              value={otpText}
+              onChangeText={handleOtpChange}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              keyboardType="number-pad"
+              maxLength={OTP_LENGTH}
+              autoFocus
+              caretHidden
+              secureTextEntry={false}
+            />
+
+            <Animated.View
+              entering={FadeInUp.delay(300).springify().damping(16)}
+              style={[styles.otpRow, shakeStyle]}
+              pointerEvents="none"
+            >
+              {Array(OTP_LENGTH)
+                .fill(0)
+                .map((_, index) => {
+                  const digit = otpText[index] || '';
+                  const isCurrentFocused = isFocused && (otpText.length === index || (otpText.length === OTP_LENGTH && index === OTP_LENGTH - 1));
+                  const isFilled = digit !== '';
+                  return (
+                    <View key={index} style={styles.otpBoxWrapper}>
+                      {isCurrentFocused && <View style={styles.otpFocusBg} />}
+                      <View
+                        style={[
+                          styles.otpBox,
+                          isCurrentFocused && styles.otpBoxFocused,
+                          isFilled && styles.otpBoxFilled,
+                          error ? styles.otpBoxError : {},
+                          { justifyContent: 'center', alignItems: 'center' },
+                        ]}
+                      >
+                        <Text style={styles.otpBoxText}>{digit}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+            </Animated.View>
+          </View>
 
         {/* Error */}
         {error ? (
@@ -228,7 +239,8 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
             </Text>
           </TouchableOpacity>
         </Animated.View>
-      </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -237,9 +249,15 @@ const BOX_SIZE = 48;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   content: {
-    flex: 1, padding: spacing.xl, paddingTop: spacing.xl * 2,
-    justifyContent: 'center', gap: spacing.lg,
+    padding: spacing.xl,
+    paddingVertical: spacing.xl * 1.5,
+    justifyContent: 'center',
+    gap: spacing.lg,
   },
   backBtn: {
     width: 44, height: 44, borderRadius: 12,
@@ -263,6 +281,27 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.bodyMd, color: colors.onSurfaceVariant,
     textAlign: 'center', lineHeight: 24,
+  },
+  testBadge: {
+    backgroundColor: `${colors.primary}20`,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: borderRadius.pill,
+    borderWidth: 1,
+    borderColor: `${colors.primary}50`,
+    marginTop: spacing.xs,
+  },
+  testBadgeText: {
+    ...typography.labelSm,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  otpBoxesContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: spacing.xs,
   },
   otpRow: {
     flexDirection: 'row', justifyContent: 'center', gap: spacing.sm,
@@ -292,10 +331,9 @@ const styles = StyleSheet.create({
   },
   otpBoxError: { borderColor: colors.error },
   hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
+    ...StyleSheet.absoluteFillObject,
     opacity: 0,
+    zIndex: 10,
   },
   errorText: {
     ...typography.labelSm, color: colors.error,
