@@ -8,6 +8,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.jaibkharch.com/a
 
 export const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -277,8 +278,3 @@ export const api = {
     registerToken: async (token: string) => apiClient.post('/user/push-token', { token }),
   },
 };
-
-const mockWithdrawals: Array<{ id: string; amount: number; account: string; status: string; createdAt: string }> = [
-  { id: 'tx_101', amount: 500, account: '03001234567', status: 'COMPLETED', createdAt: '2026-07-28T10:15:00Z' },
-  { id: 'tx_102', amount: 1000, account: '03001234567', status: 'COMPLETED', createdAt: '2026-07-25T14:30:00Z' },
-];

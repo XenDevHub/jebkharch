@@ -19,6 +19,8 @@ import { api } from '../api/client';
 
 type Category = { id: string; name: string; icon: string; isPremium: boolean };
 
+const MAX_VISIBLE_CATEGORIES = 6;
+
 const FALLBACK_CATEGORIES = [
   { id: '1', name: 'General Knowledge', icon: 'earth', isPremium: false },
   { id: '2', name: 'Science', icon: 'flask', isPremium: false },
@@ -51,12 +53,14 @@ export default function HomeScreen({ navigation }: any) {
   const [streak, setStreak] = useState(0);
   const [tickets, setTickets] = useState(0);
   const [lives, setLives] = useState(5);
+  const [userStats, setUserStats] = useState({ wins: 0, played: 0, rank: '#--' });
   const countdown = useCountdown(TOURNAMENT_SECONDS);
 
   const [adActive, setAdActive] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
   const [rewardAmount, setRewardAmount] = useState<number | null>(null);
   const [adLoading, setAdLoading] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const walletScale = useSharedValue(1);
   const walletStyle = useAnimatedStyle(() => ({
@@ -65,21 +69,38 @@ export default function HomeScreen({ navigation }: any) {
 
   const fetchData = async () => {
     try {
-      const [catRes, walletRes, profileRes, streakRes, livesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.quiz.getCategories(),
         api.wallet.getBalance(),
         api.user.getProfile(),
         api.streak.getStatus(),
         api.bonus.getLives(),
       ]);
-      setCategories(catRes.data);
-      setBalance(walletRes.data.balance);
-      if (profileRes.data?.name) {
-        setUserName(profileRes.data.name);
-        setTickets(profileRes.data.tournamentTickets || 0);
+
+      const [catRes, walletRes, profileRes, streakRes, livesRes] = results;
+
+      if (catRes.status === 'fulfilled' && catRes.value?.data) {
+        setCategories(catRes.value.data);
       }
-      setStreak(streakRes.data.currentStreak || 0);
-      setLives(livesRes.data.lives);
+      if (walletRes.status === 'fulfilled' && walletRes.value?.data) {
+        setBalance(walletRes.value.data.balance ?? 0);
+      }
+      if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
+        const p = profileRes.value.data;
+        if (p.name) setUserName(p.name);
+        if (p.tournamentTickets !== undefined) setTickets(p.tournamentTickets);
+        setUserStats({
+          wins: p.stats?.challengesWon || 0,
+          played: p.stats?.totalQuizzes || 0,
+          rank: p.rank ? `#${p.rank}` : '#--',
+        });
+      }
+      if (streakRes.status === 'fulfilled' && streakRes.value?.data) {
+        setStreak(streakRes.value.data.currentStreak || 0);
+      }
+      if (livesRes.status === 'fulfilled' && livesRes.value?.data) {
+        setLives(livesRes.value.data.lives ?? 5);
+      }
     } catch {}
   };
 
@@ -234,7 +255,12 @@ export default function HomeScreen({ navigation }: any) {
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.heroBanner}
-            onPress={() => navigation.navigate('Quiz', { categoryId: '1', categoryName: 'Mega Tech Quiz' })}
+            onPress={() => {
+              const activeCat = categories[0];
+              if (activeCat) {
+                navigation.navigate('Quiz', { categoryId: activeCat.id, categoryName: activeCat.name });
+              }
+            }}
           >
             <LinearGradient
               colors={[colors.primaryDim, '#004d35', '#002a1e']}
@@ -250,7 +276,7 @@ export default function HomeScreen({ navigation }: any) {
                   <Text style={styles.liveText}>LIVE TOURNAMENT</Text>
                 </View>
 
-                <Text style={styles.heroTitle}>Mega Tech Quiz 🚀</Text>
+                <Text style={styles.heroTitle}>{categories[0]?.name || 'Mega Quiz'} 🚀</Text>
                 <Text style={styles.heroSubtitle}>Win up to 5,000 Coins!</Text>
 
                 <View style={styles.heroMeta}>
@@ -268,7 +294,12 @@ export default function HomeScreen({ navigation }: any) {
                 <View style={styles.heroFooter}>
                   <TouchableOpacity
                     style={styles.playButton}
-                    onPress={() => navigation.navigate('Quiz', { categoryId: '1', categoryName: 'Mega Tech Quiz' })}
+                    onPress={() => {
+                      const activeCat = categories[0];
+                      if (activeCat) {
+                        navigation.navigate('Quiz', { categoryId: activeCat.id, categoryName: activeCat.name });
+                      }
+                    }}
                   >
                     <Text style={styles.playButtonText}>Join Now</Text>
                     <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} />
@@ -282,9 +313,9 @@ export default function HomeScreen({ navigation }: any) {
         {/* ── Quick Stats ── */}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.statsRow}>
           {[
-            { icon: 'trophy', color: colors.secondary, value: '12', label: 'Wins' },
-            { icon: 'game-controller', color: colors.primary, value: '45', label: 'Played' },
-            { icon: 'podium', color: '#a78bfa', value: '#14', label: 'Rank', onPress: () => navigation.navigate('Leaderboard') },
+            { icon: 'trophy', color: colors.secondary, value: String(userStats.wins), label: 'Wins' },
+            { icon: 'game-controller', color: colors.primary, value: String(userStats.played), label: 'Played' },
+            { icon: 'podium', color: '#a78bfa', value: userStats.rank, label: 'Rank', onPress: () => navigation.navigate('Leaderboard') },
           ].map((stat, i) => (
             <TouchableOpacity
               key={i}
@@ -348,13 +379,17 @@ export default function HomeScreen({ navigation }: any) {
         {/* ── Categories ── */}
         <Animated.View entering={FadeInDown.delay(250)} style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Quiz Categories</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See All →</Text>
-          </TouchableOpacity>
+          {categories.length > MAX_VISIBLE_CATEGORIES && (
+            <TouchableOpacity onPress={() => setShowAllCategories(!showAllCategories)}>
+              <Text style={styles.seeAll}>
+                {showAllCategories ? 'Show Less ←' : 'See All →'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </Animated.View>
 
         <View style={styles.grid}>
-          {categories.map((cat, i) => (
+          {(showAllCategories ? categories : categories.slice(0, MAX_VISIBLE_CATEGORIES)).map((cat, i) => (
             <GlassCard
               key={cat.id}
               title={cat.name}

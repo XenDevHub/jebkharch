@@ -4,13 +4,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api'
 
 export const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('adminToken');
+  const token =
+    localStorage.getItem('adminToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('admin_token') ||
+    localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,7 +27,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('adminToken');
-      window.location.href = '/login';
+      localStorage.removeItem('token');
     }
     return Promise.reject(error);
   }
