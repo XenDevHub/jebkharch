@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QuizService } from '../quiz/quiz.service';
+import { NotificationService } from '../notification/notification.service';
 import { Difficulty } from '@jebkharch/shared';
 import { WithdrawalStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +14,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quizService: QuizService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ── User Management ───────────────────────────────────────────────────────
@@ -323,11 +325,12 @@ export class AdminService {
 
   async sendPushNotification(title: string, body: string, target = 'ALL') {
     this.logger.log(`[PUSH NOTIFICATION] Target: ${target} | Title: ${title} | Body: ${body}`);
-    // Simulated push broadcast
+    const result = await this.notificationService.broadcastToAll({ title, body });
     return {
       success: true,
-      message: `Push notification sent to ${target} users!`,
-      recipientCount: target === 'ALL' ? await this.prisma.user.count() : 1,
+      message: `Push notification dispatched! Sent: ${result.sent}, Failed: ${result.failed}`,
+      sent: result.sent,
+      failed: result.failed,
     };
   }
 }
