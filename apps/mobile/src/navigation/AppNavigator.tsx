@@ -6,6 +6,7 @@ import SplashScreen from '../screens/SplashScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import PhoneAuthScreen from '../screens/auth/PhoneAuthScreen';
 import OtpVerifyScreen from '../screens/auth/OtpVerifyScreen';
+import CreateProfileScreen from '../screens/auth/CreateProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import QuizScreen from '../screens/quiz/QuizScreen';
 import QuizResultScreen from '../screens/quiz/QuizResultScreen';
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   PhoneAuth: undefined;
   OtpVerify: { phone: string };
+  CreateProfile: { phone: string; otpCode: string; deviceId: string };
   Home: undefined;
   Quiz: { categoryId: string; categoryName: string };
   QuizResult: { score: number; total: number; coinsEarned: number };
@@ -56,6 +58,7 @@ export function AppNavigator() {
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />
         <Stack.Screen name="OtpVerify" component={OtpVerifyScreen} />
+        <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="QuizResult" component={QuizResultScreen} />

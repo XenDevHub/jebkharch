@@ -63,12 +63,20 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
     setError('');
     setLoading(true);
     try {
-      const res = await api.auth.verifyOtp(phone, code, 'temp-device-id');
+      const deviceId = (await AsyncStorage.getItem('deviceId')) || 'android-device';
+      const res = await api.auth.verifyOtp(phone, code, deviceId);
+
+      if (res.isNewUser) {
+        navigation.replace('CreateProfile', { phone, otpCode: code, deviceId });
+        return;
+      }
+
       if (res.data?.accessToken) {
         await AsyncStorage.setItem('accessToken', res.data.accessToken);
         if (res.data.refreshToken) {
           await AsyncStorage.setItem('refreshToken', res.data.refreshToken);
         }
+        await AsyncStorage.setItem('user_phone', phone);
       }
       successScale.value = withSpring(1.1, { damping: 8 }, () => {
         successScale.value = withSpring(1);

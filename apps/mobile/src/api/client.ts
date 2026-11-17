@@ -80,33 +80,15 @@ export const api = {
           platform: 'android',
           deviceModel: 'Android SDK built for x86'
         });
-        return loginRes;
+        return { isNewUser: false, data: loginRes.data };
       } catch (err: any) {
         const isNotRegistered =
-          err.response?.status === 401 ||
-          err.response?.data?.message?.toLowerCase().includes('not found') ||
-          err.response?.data?.message?.toLowerCase().includes('register');
+          err.response?.status === 401 &&
+          (err.response?.data?.message?.toLowerCase().includes('not found') ||
+           err.response?.data?.message?.toLowerCase().includes('register'));
 
         if (isNotRegistered) {
-          await apiClient.post('/auth/verify-otp', {
-            phone,
-            otpCode: otp,
-            purpose: 'LOGIN'
-          });
-          await apiClient.post('/auth/create-profile', {
-            phone,
-            name: `Player ${phone.slice(-4)}`,
-            deviceId,
-            platform: 'android',
-            deviceModel: 'Android SDK built for x86'
-          });
-          return apiClient.post('/auth/login', {
-            phone,
-            otpCode: otp,
-            deviceId,
-            platform: 'android',
-            deviceModel: 'Android SDK built for x86'
-          });
+          return { isNewUser: true, data: null };
         }
         throw err;
       }
