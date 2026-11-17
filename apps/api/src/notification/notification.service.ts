@@ -37,8 +37,9 @@ export class NotificationService {
    * Send a push notification to a raw Expo push token
    */
   async sendToToken(token: string, payload: PushNotificationPayload): Promise<boolean> {
-    if (!token || !token.startsWith('ExponentPushToken[')) {
-      this.logger.warn(`Invalid Expo push token: ${token}`);
+    const trimmed = token?.trim();
+    if (!trimmed || trimmed.length < 5) {
+      this.logger.warn(`Invalid push token: ${token}`);
       return false;
     }
 
@@ -51,7 +52,7 @@ export class NotificationService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: token,
+          to: trimmed,
           sound: payload.sound || 'default',
           title: payload.title,
           body: payload.body,
@@ -61,7 +62,7 @@ export class NotificationService {
       });
 
       const data = await response.json();
-      this.logger.log(`Push notification sent successfully to ${token}: ${JSON.stringify(data)}`);
+      this.logger.log(`Push notification response for ${trimmed}: ${JSON.stringify(data)}`);
       return true;
     } catch (error: any) {
       this.logger.error(`Failed to send push notification: ${error.message}`);
@@ -83,10 +84,11 @@ export class NotificationService {
     });
 
     const tokens = users
-      .map((u) => u.expoPushToken)
-      .filter((t): t is string => !!t && t.startsWith('ExponentPushToken['));
+      .map((u) => u.expoPushToken?.trim())
+      .filter((t): t is string => !!t && t.length > 5);
 
     if (tokens.length === 0) {
+      this.logger.warn('[broadcastToAll] No users found with registered push tokens.');
       return { sent: 0, failed: 0 };
     }
 
@@ -109,7 +111,7 @@ export class NotificationService {
           data: payload.data || {},
         }));
 
-        await fetch(this.expoPushEndpoint, {
+        const res = await fetch(this.expoPushEndpoint, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -119,8 +121,12 @@ export class NotificationService {
           body: JSON.stringify(messages),
         });
 
+        const resData = await res.json();
+        this.logger.log(`Broadcast chunk sent to ${chunk.length} devices. Expo response: ${JSON.stringify(resData)}`);
+
         sent += chunk.length;
-      } catch (e) {
+      } catch (e: any) {
+        this.logger.error(`Broadcast chunk error: ${e?.message}`);
         failed += chunk.length;
       }
     }

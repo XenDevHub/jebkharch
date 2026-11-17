@@ -70,10 +70,7 @@ export class UserController {
   @Post('push-token')
   @ApiOperation({ summary: 'Register Expo push token for notifications' })
   async registerPushToken(@CurrentUser('id') userId: string, @Body() dto: PushTokenDto) {
-    await this.userService['prisma'].user.update({
-      where: { id: userId },
-      data: { expoPushToken: dto.token },
-    }).catch(() => null);
+    await this.userService.updatePushToken(userId, dto.token).catch(() => null);
     return { success: true };
   }
 }

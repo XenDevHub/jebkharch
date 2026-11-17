@@ -98,4 +98,12 @@ export class UserService {
       pageSize,
     };
   }
+
+  async updatePushToken(userId: string, token: string) {
+    this.logger.log(`Registering push token for user ${userId}: ${token}`);
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { expoPushToken: token },
+    });
+  }
 }

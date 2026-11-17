@@ -22,6 +22,7 @@ import {
   useStreakStatus, useLives, QUERY_KEYS,
 } from '../hooks/useAppData';
 import { AdMobManager } from '../services/adMobService';
+import { syncPushTokenWithBackend } from '../services/notificationService';
 
 type Category = { id: string; name: string; icon: string; isPremium: boolean };
 
@@ -77,6 +78,11 @@ export default function HomeScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const countdown = useCountdown(TOURNAMENT_SECONDS);
+
+  // Sync push token with backend whenever Home is viewed
+  React.useEffect(() => {
+    syncPushTokenWithBackend();
+  }, []);
 
   const [adActive, setAdActive] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);

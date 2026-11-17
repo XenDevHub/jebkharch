@@ -12,6 +12,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../api/client';
+import { registerForPushNotificationsAsync } from '../../services/notificationService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProfile'>;
 
@@ -47,6 +48,8 @@ export default function CreateProfileScreen({ route, navigation }: Props) {
           await AsyncStorage.setItem('refreshToken', regRes.data.refreshToken);
         }
         await AsyncStorage.setItem('user_phone', phone);
+        // Register push token immediately after creating profile
+        registerForPushNotificationsAsync().catch(() => null);
       }
       navigation.replace('Home');
     } catch (err: any) {

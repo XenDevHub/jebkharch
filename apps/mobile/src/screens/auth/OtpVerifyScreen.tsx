@@ -16,6 +16,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../api/client';
+import { registerForPushNotificationsAsync } from '../../services/notificationService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OtpVerify'>;
 
@@ -77,6 +78,8 @@ export default function OtpVerifyScreen({ route, navigation }: Props) {
           await AsyncStorage.setItem('refreshToken', res.data.refreshToken);
         }
         await AsyncStorage.setItem('user_phone', phone);
+        // Register push token immediately on login
+        registerForPushNotificationsAsync().catch(() => null);
       }
       successScale.value = withSpring(1.1, { damping: 8 }, () => {
         successScale.value = withSpring(1);
