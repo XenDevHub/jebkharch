@@ -18,6 +18,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { TransactionType, TransactionStatus } from '@prisma/client';
 import dayjs from 'dayjs';
+import { MissionsService } from '../missions/missions.service';
 
 @Injectable()
 export class QuizService {
@@ -27,6 +28,7 @@ export class QuizService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly missionsService: MissionsService,
   ) {
     const apiKey = this.config.get('OPENAI_API_KEY');
     if (apiKey && apiKey !== 'sk-your-openai-key-here') {
@@ -255,6 +257,17 @@ export class QuizService {
         }
       }
     });
+
+    // Update missions and achievements
+    try {
+      await this.missionsService.updateMissionProgress(userId, 'QUIZ_PLAYED', 1);
+      if (correctCount >= 5) {
+        await this.missionsService.updateMissionProgress(userId, 'PERFECT_SCORE', 5);
+      }
+      await this.missionsService.checkAndUnlockAchievements(userId);
+    } catch (e: any) {
+      this.logger.warn(`Failed to update missions/achievements: ${e?.message}`);
+    }
 
     const updatedSession = await this.prisma.quizSession.findUnique({
       where: { id: sessionId },

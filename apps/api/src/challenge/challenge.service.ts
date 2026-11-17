@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChallengeGateway } from './challenge.gateway';
+import { MissionsService } from '../missions/missions.service';
 import { COIN_CONSTANTS, TransactionSource, SocketEvent } from '@jebkharch/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { ChallengeStatus, TransactionType, TransactionStatus } from '@prisma/client';
@@ -22,6 +23,7 @@ export class ChallengeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: ChallengeGateway,
+    private readonly missionsService: MissionsService,
   ) {}
 
   // ── Create Challenge ──────────────────────────────────────────────────────
@@ -287,6 +289,16 @@ export class ChallengeService {
         });
       }
     });
+
+    // Update missions and achievements
+    if (winnerId) {
+      try {
+        await this.missionsService.updateMissionProgress(winnerId, 'CHALLENGE_WON', 1);
+        await this.missionsService.checkAndUnlockAchievements(winnerId);
+      } catch (err: any) {
+        this.logger.warn(`Failed to update challenge missions for winner: ${err?.message}`);
+      }
+    }
 
     // Notify both players
     this.gateway.notifyChallengeCompleted(challengeId, {
