@@ -19,8 +19,8 @@ export class UserService {
     });
     if (!user) throw new NotFoundException('User not found.');
 
-    // Calculate stats
-    const [totalQuizzes, correctAnswers, totalAnswers, totalChallenges, challengesWon] = await Promise.all([
+    // Calculate stats and dynamic leaderboard rank
+    const [totalQuizzes, correctAnswers, totalAnswers, totalChallenges, challengesWon, higherXpCount] = await Promise.all([
       this.prisma.quizSession.count({ where: { userId, isCompleted: true } }),
       this.prisma.quizAnswer.count({
         where: { session: { userId }, isCorrect: true },
@@ -30,10 +30,14 @@ export class UserService {
         where: { OR: [{ creatorId: userId }, { opponentId: userId }], status: 'COMPLETED' },
       }),
       this.prisma.challenge.count({ where: { winnerId: userId } }),
+      this.prisma.user.count({ where: { xp: { gt: user.xp } } }),
     ]);
+
+    const dynamicRank = higherXpCount + 1;
 
     return {
       ...user,
+      rank: dynamicRank,
       stats: {
         totalQuizzes,
         accuracy: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0,

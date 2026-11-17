@@ -256,9 +256,9 @@ export default function HomeScreen({ navigation }: any) {
             activeOpacity={0.9}
             style={styles.heroBanner}
             onPress={() => {
-              const activeCat = categories[0];
-              if (activeCat) {
-                navigation.navigate('Quiz', { categoryId: activeCat.id, categoryName: activeCat.name });
+              const tournamentCat = categories.find((c: any) => !c.isPremium) || categories[0];
+              if (tournamentCat) {
+                navigation.navigate('Quiz', { categoryId: tournamentCat.id, categoryName: tournamentCat.name });
               }
             }}
           >
@@ -276,7 +276,9 @@ export default function HomeScreen({ navigation }: any) {
                   <Text style={styles.liveText}>LIVE TOURNAMENT</Text>
                 </View>
 
-                <Text style={styles.heroTitle}>{categories[0]?.name || 'Mega Quiz'} 🚀</Text>
+                <Text style={styles.heroTitle}>
+                  {(categories.find((c: any) => !c.isPremium) || categories[0])?.name || 'Mega Quiz'} 🚀
+                </Text>
                 <Text style={styles.heroSubtitle}>Win up to 5,000 Coins!</Text>
 
                 <View style={styles.heroMeta}>
@@ -295,9 +297,9 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={styles.playButton}
                     onPress={() => {
-                      const activeCat = categories[0];
-                      if (activeCat) {
-                        navigation.navigate('Quiz', { categoryId: activeCat.id, categoryName: activeCat.name });
+                      const tournamentCat = categories.find((c: any) => !c.isPremium) || categories[0];
+                      if (tournamentCat) {
+                        navigation.navigate('Quiz', { categoryId: tournamentCat.id, categoryName: tournamentCat.name });
                       }
                     }}
                   >

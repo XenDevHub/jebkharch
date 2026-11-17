@@ -136,6 +136,7 @@ function QuizLoadingView({ categoryName }: { categoryName: string }) {
 export default function QuizScreen({ route, navigation }: Props) {
   const { categoryId, categoryName } = route.params;
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -202,8 +203,11 @@ export default function QuizScreen({ route, navigation }: Props) {
       setSessionId(res.data.sessionId);
       setQuestions(res.data.questions);
       progressAnim.value = withTiming(1 / res.data.questions.length, { duration: 500 });
-    } catch (err) { console.log(err); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      console.log(err);
+      const msg = err?.response?.data?.message || 'Quiz shuru nahi ho saki. Dobara koshish karein.';
+      setErrorMessage(msg);
+    } finally { setLoading(false); }
   };
 
   const handleSelectOption = async (optionId: string) => {
@@ -278,7 +282,13 @@ export default function QuizScreen({ route, navigation }: Props) {
     return (
       <View style={styles.center}>
         <Text style={{ fontSize: 48 }}>😕</Text>
-        <Text style={styles.loadingText}>Quiz load nahi hui</Text>
+        <Text style={styles.loadingText}>{errorMessage || 'Quiz load nahi hui'}</Text>
+        <TouchableOpacity
+          style={[styles.goBackBtn, { backgroundColor: colors.primary, marginBottom: 12 }]}
+          onPress={() => { setLoading(true); setErrorMessage(null); startQuiz(); }}
+        >
+          <Text style={[styles.goBackText, { color: '#fff' }]}>🔄 Dobara Koshish Karein</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.goBackText}>Wapas Jao</Text>
         </TouchableOpacity>
