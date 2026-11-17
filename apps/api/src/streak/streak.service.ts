@@ -166,4 +166,73 @@ export class StreakService {
       streakFreezes: user.streakFreezes + 1,
     };
   }
+
+  async recordQuizStreak(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) return;
+
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const lastStreakStr = user.lastStreakDate
+        ? new Date(user.lastStreakDate).toISOString().split('T')[0]
+        : null;
+
+      // Already recorded streak for today
+      if (lastStreakStr === todayStr) {
+        return;
+      }
+
+      let newStreak = user.currentStreak;
+      let usedFreeze = false;
+
+      if (lastStreakStr) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        if (lastStreakStr === yesterdayStr) {
+          newStreak += 1;
+        } else {
+          // Missed at least one day — check if user has a streak freeze
+          if (user.streakFreezes > 0) {
+            await this.prisma.user.update({
+              where: { id: userId },
+              data: { streakFreezes: { decrement: 1 } },
+            });
+            newStreak += 1;
+            usedFreeze = true;
+          } else {
+            newStreak = 1; // Reset streak
+          }
+        }
+      } else {
+        newStreak = 1;
+      }
+
+      const longestStreak = Math.max(user.longestStreak, newStreak);
+
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            currentStreak: newStreak,
+            longestStreak,
+            lastStreakDate: now,
+          },
+        }),
+        this.prisma.streakLog.create({
+          data: {
+            userId,
+            date: now,
+            usedFreeze,
+          },
+        }),
+      ]);
+    } catch (e: any) {
+      // Don't interrupt quiz completion if streak recording encounters an issue
+    }
+  }
 }

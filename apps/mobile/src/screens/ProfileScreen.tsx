@@ -297,7 +297,8 @@ export default function ProfileScreen({ navigation }: Props) {
                 { text: 'Buy (200 🪙)', onPress: async () => {
                   try {
                     await api.streak.buyFreeze();
-                    Alert.alert('Success', 'Streak freeze purchased! 🧊');
+                    Alert.alert('Zabardast! 🧊', 'Streak freeze khareed liya gaya hai!');
+                    fetchProfileData();
                   } catch (e: any) {
                     Alert.alert('Error', e.response?.data?.message || 'Failed to buy freeze');
                   }
@@ -310,7 +311,11 @@ export default function ProfileScreen({ navigation }: Props) {
             </View>
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuTitle}>Streak Freeze</Text>
-              <Text style={styles.menuSubtitle}>Buy freeze to protect your streak</Text>
+              <Text style={styles.menuSubtitle}>
+                {profile?.streakFreezes !== undefined
+                  ? `${profile.streakFreezes} Freeze Available 🧊 • Tap to buy`
+                  : 'Buy freeze to protect your streak'}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>

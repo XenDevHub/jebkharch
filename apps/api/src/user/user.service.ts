@@ -15,6 +15,7 @@ export class UserService {
         id: true, phone: true, name: true, email: true, dob: true,
         avatarUrl: true, coins: true, xp: true, rank: true,
         isPro: true, referralCode: true, isBanned: true, createdAt: true,
+        currentStreak: true, longestStreak: true, streakFreezes: true,
       },
     });
     if (!user) throw new NotFoundException('User not found.');

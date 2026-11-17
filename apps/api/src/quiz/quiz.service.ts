@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { TransactionType, TransactionStatus } from '@prisma/client';
 import dayjs from 'dayjs';
 import { MissionsService } from '../missions/missions.service';
+import { StreakService } from '../streak/streak.service';
 
 @Injectable()
 export class QuizService {
@@ -29,6 +30,7 @@ export class QuizService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly missionsService: MissionsService,
+    private readonly streakService: StreakService,
   ) {
     const apiKey = this.config.get('OPENAI_API_KEY');
     if (apiKey && apiKey !== 'sk-your-openai-key-here') {
@@ -174,6 +176,20 @@ export class QuizService {
       data: { usageCount: { increment: 1 } },
     });
 
+    // Save to wrong_answers for "Learn from Mistakes" review
+    if (!isCorrect) {
+      await this.prisma.wrongAnswer.upsert({
+        where: { userId_questionId: { userId, questionId } },
+        update: { practiceCount: { increment: 1 }, masteredAt: null },
+        create: {
+          id: uuidv4(),
+          userId,
+          questionId,
+          sessionId,
+        },
+      }).catch((e: any) => this.logger.warn(`Failed to record wrong answer: ${e?.message}`));
+    }
+
     return { isCorrect, correctAnswer: question.correctAnswer };
   }
 
@@ -257,6 +273,13 @@ export class QuizService {
         }
       }
     });
+
+    // Update daily streak and handle streak freeze
+    try {
+      await this.streakService.recordQuizStreak(userId);
+    } catch (e: any) {
+      this.logger.warn(`Failed to update streak: ${e?.message}`);
+    }
 
     // Update missions and achievements
     try {
