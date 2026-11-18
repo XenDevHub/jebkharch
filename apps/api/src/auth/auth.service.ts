@@ -118,13 +118,24 @@ export class AuthService {
       throw new ForbiddenException('Too many incorrect attempts. Please request a new OTP.');
     }
 
-    // Magic OTP "123456" is strictly restricted to non-production environments
+    // Whitelisted test phone numbers that always accept magic OTP (Google Play review, test users)
+    const whitelistedTestPhones = [
+      '03001234567',
+      '03331234567',
+      '03111234567',
+      '03000000000',
+      '03123456789',
+    ];
+    const isTestPhone = whitelistedTestPhones.includes(normalizedPhone);
+
+    // Allow test OTP "123456" for whitelisted test users, when SMS_PROVIDER is mock, or when ALLOW_TEST_OTP=true
     const isProduction = this.config.get('NODE_ENV') === 'production';
-    const allowTestOtp = !isProduction && (
-      this.config.get('NODE_ENV') === 'development' ||
+    const allowTestOtp =
+      isTestPhone ||
       this.config.get('SMS_PROVIDER') === 'mock' ||
-      this.config.get('ALLOW_TEST_OTP') === 'true'
-    );
+      this.config.get('ALLOW_TEST_OTP') === 'true' ||
+      !isProduction;
+
     const isCorrect = allowTestOtp
       ? (otpCode === '123456' || otpCode === otpRecord.otpCode)
       : (otpCode === otpRecord.otpCode);
