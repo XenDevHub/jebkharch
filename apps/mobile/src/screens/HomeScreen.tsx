@@ -16,11 +16,13 @@ import BottomNav from '../components/BottomNav';
 import PulsingDot from '../components/PulsingDot';
 import AnimatedNumber from '../components/AnimatedNumber';
 import LivesModal from '../components/LivesModal';
+import StreakModal from '../components/StreakModal';
+import TicketModal from '../components/TicketModal';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme/designSystem';
 import { api } from '../api/client';
 import {
   useProfile, useCategories, useWalletBalance,
-  useStreakStatus, useLives, QUERY_KEYS,
+  useStreakStatus, useLives, useTickets, QUERY_KEYS,
 } from '../hooks/useAppData';
 import { AdMobManager } from '../services/adMobService';
 import { syncPushTokenWithBackend } from '../services/notificationService';
@@ -62,13 +64,14 @@ export default function HomeScreen({ navigation }: any) {
   const { data: balanceData } = useWalletBalance();
   const { data: streakData } = useStreakStatus();
   const { data: livesData } = useLives();
+  const { data: ticketsData } = useTickets();
 
   // Derived values with safe fallbacks
   const categories: Category[] = categoriesData || FALLBACK_CATEGORIES;
   const balance = balanceData ?? 0;
   const userName = profileData?.name || 'Player';
   const streak = streakData?.currentStreak || 0;
-  const tickets = profileData?.tournamentTickets || 0;
+  const tickets = ticketsData ?? (profileData?.tournamentTickets || 0);
   const lives = livesData?.lives ?? 5;
   const userStats = {
     wins: profileData?.stats?.challengesWon || 0,
@@ -79,6 +82,8 @@ export default function HomeScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showLivesModal, setShowLivesModal] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
   const countdown = useCountdown(TOURNAMENT_SECONDS);
 
   const startQuiz = (categoryId: string, categoryName: string) => {
@@ -174,66 +179,121 @@ export default function HomeScreen({ navigation }: any) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Top Bar ── */}
-        <Animated.View entering={FadeInDown.delay(50)} style={styles.topBar}>
-          <TouchableOpacity style={styles.userInfo} onPress={() => navigation.navigate('Profile')}>
-            <LinearGradient
-              colors={[`${colors.primary}40`, `${colors.primary}15`]}
-              style={styles.avatar}
-            >
-              {profileData?.avatarUrl ? (
-                <Image
-                  source={{ uri: profileData.avatarUrl }}
-                  style={styles.avatarImg}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Text style={styles.avatarText}>
-                  {userName.charAt(0).toUpperCase()}
-                </Text>
-              )}
-            </LinearGradient>
-            <View>
-              <Text style={styles.greeting}>Hey, {userName} 👋</Text>
+        {/* ── Top Bar: Tier 1 (Profile & Quick Actions) ── */}
+        <Animated.View entering={FadeInDown.delay(50)} style={styles.headerTier1}>
+          <TouchableOpacity
+            style={styles.userInfo}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.avatarWrapper}>
+              <LinearGradient
+                colors={[`${colors.primary}60`, `${colors.primary}20`]}
+                style={styles.avatar}
+              >
+                {profileData?.avatarUrl ? (
+                  <Image
+                    source={{ uri: profileData.avatarUrl }}
+                    style={styles.avatarImg}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {userName.charAt(0).toUpperCase()}
+                  </Text>
+                )}
+              </LinearGradient>
+              <View style={styles.onlineDot} />
+            </View>
+            <View style={styles.userTextContainer}>
+              <Text style={styles.greeting} numberOfLines={1}>Hey, {userName} 👋</Text>
               <Text style={styles.subGreeting}>Aaj jeetne ka plan hai? 🔥</Text>
             </View>
           </TouchableOpacity>
 
-          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-            <TouchableOpacity style={styles.walletChip} onPress={() => setShowLivesModal(true)}>
-              <Text style={{ fontSize: 14 }}>❤️</Text>
-              <Text style={styles.walletText}>{lives}</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('Missions')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="trophy-outline" size={19} color={colors.secondary} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Missions')}>
-              <Text style={{ fontSize: 14 }}>🔥</Text>
-              <Text style={styles.walletText}>{streak}</Text>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => navigation.navigate('Profile')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="settings-outline" size={19} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
+          </View>
+        </Animated.View>
 
-            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Missions')}>
-              <Text style={{ fontSize: 14 }}>🎟️</Text>
-              <Text style={styles.walletText}>{tickets}</Text>
-            </TouchableOpacity>
+        {/* ── Top Bar: Tier 2 (Balanced 4-Chip Status HUD) ── */}
+        <Animated.View entering={FadeInDown.delay(90)} style={styles.hudContainer}>
+          {/* 1. ❤️ Lives */}
+          <TouchableOpacity
+            style={[styles.hudChip, { borderColor: 'rgba(244, 63, 94, 0.35)', backgroundColor: 'rgba(244, 63, 94, 0.1)' }]}
+            onPress={() => setShowLivesModal(true)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.hudChipTop}>
+              <Text style={styles.hudIcon}>❤️</Text>
+              <Text style={[styles.hudValue, { color: '#f43f5e' }]}>{lives}/5</Text>
+            </View>
+            <Text style={styles.hudLabel}>Energy</Text>
+          </TouchableOpacity>
 
-            <Animated.View style={walletStyle}>
-              <TouchableOpacity
-                style={styles.walletChip}
-                onPress={() => {
-                  walletScale.value = withSpring(0.9, { damping: 10 }, () => {
-                    walletScale.value = withSpring(1);
-                  });
-                  navigation.navigate('Wallet');
-                }}
-              >
-                <Ionicons name="star" size={14} color={colors.secondary} />
+          {/* 2. 🔥 Streak */}
+          <TouchableOpacity
+            style={[styles.hudChip, { borderColor: 'rgba(249, 115, 22, 0.35)', backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}
+            onPress={() => setShowStreakModal(true)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.hudChipTop}>
+              <Text style={styles.hudIcon}>🔥</Text>
+              <Text style={[styles.hudValue, { color: '#f97316' }]}>{streak}d</Text>
+            </View>
+            <Text style={styles.hudLabel}>Streak</Text>
+          </TouchableOpacity>
+
+          {/* 3. 🎟️ Tickets */}
+          <TouchableOpacity
+            style={[styles.hudChip, { borderColor: 'rgba(168, 85, 247, 0.35)', backgroundColor: 'rgba(168, 85, 247, 0.1)' }]}
+            onPress={() => setShowTicketModal(true)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.hudChipTop}>
+              <Text style={styles.hudIcon}>🎟️</Text>
+              <Text style={[styles.hudValue, { color: '#c084fc' }]}>{tickets}</Text>
+            </View>
+            <Text style={styles.hudLabel}>Tickets</Text>
+          </TouchableOpacity>
+
+          {/* 4. ⭐ Coins */}
+          <Animated.View style={[{ flex: 1 }, walletStyle]}>
+            <TouchableOpacity
+              style={[styles.hudChip, { borderColor: 'rgba(234, 179, 8, 0.35)', backgroundColor: 'rgba(234, 179, 8, 0.1)' }]}
+              onPress={() => {
+                walletScale.value = withSpring(0.9, { damping: 10 }, () => {
+                  walletScale.value = withSpring(1);
+                });
+                navigation.navigate('Wallet');
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={styles.hudChipTop}>
+                <Ionicons name="star" size={13} color={colors.secondary} />
                 <AnimatedNumber
                   value={balance}
-                  style={styles.walletText}
+                  style={styles.hudCoinsValue}
                   duration={800}
                 />
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+              </View>
+              <Text style={styles.hudLabel}>Coins</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </Animated.View>
 
         {/* ── Daily Spin & Missions ── */}
@@ -455,6 +515,17 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowLivesModal(false)}
       />
 
+      <StreakModal
+        visible={showStreakModal}
+        onClose={() => setShowStreakModal(false)}
+      />
+
+      <TicketModal
+        visible={showTicketModal}
+        onClose={() => setShowTicketModal(false)}
+        onOpenTournaments={() => navigation.navigate('ChallengeLobby')}
+      />
+
       <BottomNav active="Home" navigation={navigation} />
 
       {/* Ad Overlay Modal */}
@@ -496,22 +567,129 @@ const styles = StyleSheet.create({
     padding: spacing.md, paddingTop: spacing.xl + 10,
     paddingBottom: 100, gap: spacing.md,
   },
-  topBar: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  headerTier1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
-  userInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  avatarWrapper: {
+    position: 'relative',
+  },
   avatar: {
-    width: 48, height: 48, borderRadius: 24,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1.5, borderColor: `${colors.primary}60`,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: `${colors.primary}60`,
     overflow: 'hidden',
   },
   avatarImg: {
-    width: 48, height: 48, borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   avatarText: { ...typography.headlineSm, color: colors.primary },
-  greeting: { ...typography.labelMd, fontSize: 16, color: colors.white },
-  subGreeting: { ...typography.bodyMd, fontSize: 12, color: colors.onSurfaceVariant },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#22c55e',
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  userTextContainer: {
+    flex: 1,
+  },
+  greeting: {
+    ...typography.labelMd,
+    fontSize: 16,
+    color: colors.white,
+    fontWeight: '700',
+  },
+  subGreeting: {
+    ...typography.bodyMd,
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    marginTop: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  hudContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    padding: 6,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+  },
+  hudChip: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  hudChipTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  hudIcon: {
+    fontSize: 13,
+  },
+  hudValue: {
+    ...typography.labelMd,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  hudCoinsValue: {
+    ...typography.labelMd,
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.secondary,
+  },
+  hudLabel: {
+    ...typography.labelSm,
+    fontSize: 9,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  topBar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
   walletChip: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: `${colors.secondary}15`,

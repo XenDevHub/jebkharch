@@ -17,6 +17,7 @@ export const QUERY_KEYS = {
   teams: ['teams'] as const,
   withdrawalHistory: ['withdrawal', 'history'] as const,
   referralCode: ['referral', 'code'] as const,
+  tickets: ['tickets'] as const,
 };
 
 // ── Profile ──
@@ -79,6 +80,18 @@ export function useLives() {
   });
 }
 
+// ── Tickets ──
+export function useTickets() {
+  return useQuery({
+    queryKey: QUERY_KEYS.tickets,
+    queryFn: async () => {
+      const res = await api.tickets.getBalance();
+      return res.data?.tournamentTickets ?? 0;
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
 // ── Leaderboard ──
 export function useLeaderboard() {
   return useQuery({
@@ -135,6 +148,10 @@ export function useInvalidateQueries() {
     invalidateBalance: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance }),
     invalidateStreak: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.streakStatus }),
     invalidateLives: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.lives }),
+    invalidateTickets: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.tickets });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+    },
     invalidateMissions: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.missions }),
     invalidateWrongAnswers: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.wrongAnswers }),
     invalidateAll: () => qc.invalidateQueries(),
