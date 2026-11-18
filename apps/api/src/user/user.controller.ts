@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, Query, UseGuards, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, Query, UseGuards, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
@@ -47,10 +47,21 @@ export class UserController {
   }
 
   @Post('upload-avatar')
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(
+    FileInterceptor('avatar', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+      fileFilter: (_req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/i)) {
+          return callback(new BadRequestException('Only JPG, PNG, and WebP images are allowed.'), false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload profile picture' })
-  async uploadAvatar(@CurrentUser('id') userId: string, @UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(@CurrentUser('id') userId: string, @UploadedFile() file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Image file is required.');
     // In dev: save to local uploads/; in prod: upload to S3
     const avatarUrl = `/uploads/avatars/${userId}-${Date.now()}.jpg`;
     return this.userService.updateAvatar(userId, avatarUrl);

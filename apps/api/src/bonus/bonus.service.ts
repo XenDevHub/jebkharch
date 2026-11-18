@@ -101,6 +101,16 @@ export class BonusService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('User not found');
 
+    // Enforce daily ad cap
+    const todayStart = dayjs().startOf('day').toDate();
+    const todayAdCount = await this.prisma.adLog.count({
+      where: { userId, adType: 'REWARDED', watchedAt: { gte: todayStart } },
+    });
+
+    if (todayAdCount >= 10) {
+      throw new BadRequestException('Daily ad watch limit (10 ads) reached. Come back tomorrow!');
+    }
+
     const rewardCoins = 15;
 
     await this.prisma.$transaction(async (tx) => {
@@ -149,14 +159,18 @@ export class BonusService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
+      const updateResult = await tx.user.updateMany({
+        where: { id: userId, coins: { gte: cost } },
         data: {
           coins: { decrement: cost },
           lives: this.MAX_LIVES,
           lastLifeRefillAt: new Date(),
         },
       });
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException('Insufficient coins or concurrent transaction.');
+      }
 
       await tx.walletTransaction.create({
         data: {

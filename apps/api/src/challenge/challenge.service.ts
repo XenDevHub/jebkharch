@@ -199,6 +199,13 @@ export class ChallengeService {
 
     const isCreator = challenge.creatorId === userId;
 
+    if (isCreator && challenge.creatorScore !== null) {
+      throw new BadRequestException('You have already submitted your score for this challenge.');
+    }
+    if (!isCreator && challenge.opponentScore !== null) {
+      throw new BadRequestException('You have already submitted your score for this challenge.');
+    }
+
     // Store score
     await this.prisma.challenge.update({
       where: { id: challengeId },

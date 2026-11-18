@@ -102,12 +102,19 @@ export class WalletService {
 
     const requiresReview = coins >= COIN_CONSTANTS.LARGE_WITHDRAWAL_THRESHOLD || user.isFlagged;
 
-    // Atomic: deduct coins + create withdrawal
+    // Atomic: check-and-deduct coins + create withdrawal (race-condition proof)
     await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
+      const updateResult = await tx.user.updateMany({
+        where: { id: userId, coins: { gte: coins } },
         data: { coins: { decrement: coins } },
       });
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException('Insufficient coins or concurrent transaction in progress.');
+      }
+
+      const freshUser = await tx.user.findUnique({ where: { id: userId }, select: { coins: true } });
+      const balanceAfter = freshUser?.coins ?? (user.coins - coins);
 
       const withdrawal = await tx.withdrawal.create({
         data: {
@@ -129,8 +136,8 @@ export class WalletService {
           source: TransactionSource.WITHDRAWAL as any,
           status: TransactionStatus.PENDING,
           referenceId: withdrawal.id,
-          balanceBefore: user.coins,
-          balanceAfter: user.coins - coins,
+          balanceBefore: balanceAfter + coins,
+          balanceAfter,
           description: `Withdrawal to Easypaisa ${easypaisaNumber}`,
         },
       });

@@ -118,13 +118,16 @@ export class AuthService {
       throw new ForbiddenException('Too many incorrect attempts. Please request a new OTP.');
     }
 
-    // DEV or MOCK SMS MODE: Accept "123456" as magic OTP
-    const isDevMode =
+    // Magic OTP "123456" is strictly restricted to non-production environments
+    const isProduction = this.config.get('NODE_ENV') === 'production';
+    const allowTestOtp = !isProduction && (
       this.config.get('NODE_ENV') === 'development' ||
-      this.config.get('SMS_PROVIDER') === 'mock';
-    const isCorrect = isDevMode
-      ? otpCode === '123456' || otpCode === otpRecord.otpCode
-      : otpCode === otpRecord.otpCode;
+      this.config.get('SMS_PROVIDER') === 'mock' ||
+      this.config.get('ALLOW_TEST_OTP') === 'true'
+    );
+    const isCorrect = allowTestOtp
+      ? (otpCode === '123456' || otpCode === otpRecord.otpCode)
+      : (otpCode === otpRecord.otpCode);
 
     if (!isCorrect) {
       await this.prisma.otpVerification.update({
