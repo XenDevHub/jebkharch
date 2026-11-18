@@ -13,21 +13,23 @@ import { Text } from 'react-native';
 // This creates a smooth count-up using setInterval
 
 // Utility function to format large numbers compactly (e.g. 500, 1.2k, 25k, 1.5M, 2.3B)
-export function formatCompactNumber(num: number): string {
-  if (!num || isNaN(num) || num === 0) return '0';
-  if (num < 1000) return num.toString();
-  if (num < 10000) {
-    const k = (num / 1000).toFixed(1);
+export function formatCompactNumber(num: number | string | undefined | null): string {
+  if (num === undefined || num === null) return '0';
+  const n = typeof num === 'string' ? parseFloat(num) : num;
+  if (!n || isNaN(n) || n === 0) return '0';
+  if (n < 1000) return n.toString();
+  if (n < 10000) {
+    const k = (n / 1000).toFixed(1);
     return k.endsWith('.0') ? `${parseInt(k, 10)}k` : `${k}k`;
   }
-  if (num < 1000000) {
-    return `${Math.floor(num / 1000)}k`;
+  if (n < 1000000) {
+    return `${Math.floor(n / 1000)}k`;
   }
-  if (num < 1000000000) {
-    const m = (num / 1000000).toFixed(1);
+  if (n < 1000000000) {
+    const m = (n / 1000000).toFixed(1);
     return m.endsWith('.0') ? `${parseInt(m, 10)}M` : `${m}M`;
   }
-  const b = (num / 1000000000).toFixed(1);
+  const b = (n / 1000000000).toFixed(1);
   return b.endsWith('.0') ? `${parseInt(b, 10)}B` : `${b}B`;
 }
 

@@ -109,16 +109,21 @@ export const api = {
       return apiClient.patch('/user/update', updates);
     },
     getLeaderboard: async () => {
-      const storedPhone = await AsyncStorage.getItem('user_phone');
-      const res = await apiClient.get('/user/leaderboard');
-      const mappedData = res.data.data.map((item: any) => ({
-        rank: item.position,
-        name: item.name || `Player ${item.phone?.slice(-4) || ''}`,
-        score: item.xp,
-        avatar: item.avatarUrl || '👤',
-        isCurrentUser: item.phone === storedPhone,
-      }));
-      return { data: mappedData };
+      try {
+        const storedPhone = await AsyncStorage.getItem('user_phone');
+        const res = await apiClient.get('/user/leaderboard');
+        const list = Array.isArray(res.data?.data) ? res.data.data : [];
+        const mappedData = list.map((item: any) => ({
+          rank: item.position,
+          name: item.name || `Player ${item.phone?.slice(-4) || ''}`,
+          score: item.xp,
+          avatar: item.avatarUrl || '👤',
+          isCurrentUser: item.phone === storedPhone,
+        }));
+        return { data: mappedData };
+      } catch (err) {
+        return { data: [] };
+      }
     },
   },
   quiz: {
@@ -176,15 +181,20 @@ export const api = {
       return apiClient.post('/wallet/withdraw', { coins: amount, easypaisaNumber });
     },
     getWithdrawalHistory: async () => {
-      const res = await apiClient.get('/wallet/withdrawals');
-      const mapped = res.data.map((w: any) => ({
-        id: w.id,
-        amount: w.coins,
-        account: w.easypaisaNumber,
-        status: w.status,
-        createdAt: w.createdAt
-      }));
-      return { data: mapped };
+      try {
+        const res = await apiClient.get('/wallet/withdrawals');
+        const list = Array.isArray(res.data) ? res.data : [];
+        const mapped = list.map((w: any) => ({
+          id: w.id,
+          amount: w.coins,
+          account: w.easypaisaNumber,
+          status: w.status,
+          createdAt: w.createdAt
+        }));
+        return { data: mapped };
+      } catch (err) {
+        return { data: [] };
+      }
     },
   },
   ads: {

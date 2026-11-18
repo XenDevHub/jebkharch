@@ -104,26 +104,9 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('Quiz', { categoryId, categoryName });
   };
 
-  // Sync push token with backend whenever Home is viewed, and pre-fetch common screens in background
+  // Sync push token with backend whenever Home is viewed
   React.useEffect(() => {
     syncPushTokenWithBackend();
-
-    // Pre-fetch commonly visited screens in background for instant, 0ms transitions
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.leaderboard,
-      queryFn: async () => (await api.user.getLeaderboard()).data,
-      staleTime: 2 * 60 * 1000,
-    });
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.missions,
-      queryFn: async () => (await api.missions.getMissions()).data,
-      staleTime: 60 * 1000,
-    });
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.achievements,
-      queryFn: async () => (await api.missions.getAchievements()).data,
-      staleTime: 5 * 60 * 1000,
-    });
   }, []);
 
   const [adActive, setAdActive] = useState(false);
