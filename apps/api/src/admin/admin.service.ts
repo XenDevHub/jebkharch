@@ -314,11 +314,13 @@ export class AdminService {
   // ── Notifications ──────────────────────────────────────────────────────────
 
   async getNotificationStats() {
-    const totalUsers = await this.prisma.user.count();
+    const [totalUsers, totalTokens] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.count({ where: { expoPushToken: { not: null } } }),
+    ]);
     return {
-      totalSent: 12450,
-      deliveredRate: '98.4%',
-      activeSubscribers: totalUsers,
+      totalUsers,
+      totalTokens,
       lastSentAt: new Date().toISOString(),
     };
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Send, Users, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Bell, Send, Users, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
@@ -9,12 +9,12 @@ async function apiFetch(path: string, opts: RequestInit = {}) {
     ...opts,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...opts.headers },
   });
-  if (!res.ok) throw new Error('API fetch failed');
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export default function NotificationsAdmin() {
-  const [stats, setStats] = useState({ totalTokens: 0 });
+  const [stats, setStats] = useState<{ totalUsers: number; totalTokens: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState('');
@@ -26,8 +26,9 @@ export default function NotificationsAdmin() {
     setLoading(true);
     apiFetch('/admin/notifications/stats')
       .then(d => setStats(d))
-      .catch(() => {
-        setStats({ totalTokens: 1240 });
+      .catch((err) => {
+        console.error('Failed to fetch notification stats:', err);
+        setResult('❌ Could not load stats from API');
       })
       .finally(() => setLoading(false));
   };
@@ -39,15 +40,19 @@ export default function NotificationsAdmin() {
   const sendNotification = async () => {
     if (!form.title || !form.body) return alert('Title and body required');
     setSending(true);
+    setResult('');
     try {
       const data = await apiFetch('/admin/notifications/send', {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setResult(`✅ Sent to ${data.sent || stats.totalTokens || '1,240'} active devices`);
-    } catch {
-      // Mock feedback if offline
-      setResult(`✅ Broadcast broadcasted to ${stats.totalTokens || 1240} devices`);
+      if (data.success) {
+        setResult(`✅ Sent to ${data.sent} device(s), Failed: ${data.failed}`);
+      } else {
+        setResult(`❌ ${data.message || 'Send failed'}`);
+      }
+    } catch (err: any) {
+      setResult(`❌ Failed to send: ${err.message}`);
     } finally {
       setSending(false);
     }
@@ -83,19 +88,27 @@ export default function NotificationsAdmin() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
         <div className="glass-card rounded-2xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-400">Registered FCM Devices</p>
-          <p className="text-xl sm:text-3xl font-black text-white mt-1">{stats.totalTokens || 1240}</p>
-          <p className="text-[10px] text-slate-500 mt-1">Users with active push permissions</p>
+          <p className="text-xs font-medium text-slate-400">Registered Push Devices</p>
+          <p className="text-xl sm:text-3xl font-black text-white mt-1">
+            {loading ? '...' : (stats?.totalTokens ?? '—')}
+          </p>
+          <p className="text-[10px] text-slate-500 mt-1">Users with active push token</p>
         </div>
         <div className="glass-card rounded-2xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-400">Last Broadcast Campaign</p>
-          <p className="text-base sm:text-xl font-bold text-indigo-300 mt-1">Daily Streak Reminder</p>
-          <p className="text-[10px] text-slate-500 mt-1">Sent today at 10:00 AM</p>
+          <p className="text-xs font-medium text-slate-400">Total Registered Users</p>
+          <p className="text-base sm:text-xl font-bold text-indigo-300 mt-1">
+            {loading ? '...' : (stats?.totalUsers ?? '—')}
+          </p>
+          <p className="text-[10px] text-slate-500 mt-1">All users in the platform</p>
         </div>
         <div className="glass-card rounded-2xl p-4 sm:p-5">
-          <p className="text-xs font-medium text-slate-400">Avg Engagement Rate</p>
-          <p className="text-xl sm:text-3xl font-black text-emerald-400 mt-1">24.8%</p>
-          <p className="text-[10px] text-slate-500 mt-1">Top-quartile gaming retention</p>
+          <p className="text-xs font-medium text-slate-400">Token Coverage</p>
+          <p className="text-xl sm:text-3xl font-black text-emerald-400 mt-1">
+            {stats && stats.totalUsers > 0
+              ? `${Math.round((stats.totalTokens / stats.totalUsers) * 100)}%`
+              : '—'}
+          </p>
+          <p className="text-[10px] text-slate-500 mt-1">% of users with push enabled</p>
         </div>
       </div>
 
@@ -145,7 +158,7 @@ export default function NotificationsAdmin() {
               <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
                 result.startsWith('✅') ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
               }`}>
-                <CheckCircle2 size={15} className="shrink-0" />
+                {result.startsWith('✅') ? <CheckCircle2 size={15} className="shrink-0" /> : <AlertCircle size={15} className="shrink-0" />}
                 <span>{result}</span>
               </div>
             )}

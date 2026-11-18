@@ -28,7 +28,7 @@ class ChangePasswordDto {
 @UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Get('profile')
   @ApiOperation({ summary: 'Get own profile + stats' })
