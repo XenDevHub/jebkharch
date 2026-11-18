@@ -4,7 +4,7 @@
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    server_name api.jaibkharch.com 194.61.28.196;
+    server_name api.jaibkharch.com 217.216.33.188;
 
     # Proxy to NestJS running on port 3000
     location / {
