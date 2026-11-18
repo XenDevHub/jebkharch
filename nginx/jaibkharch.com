@@ -6,7 +6,7 @@ server {
     listen [::]:80;
     server_name jaibkharch.com www.jaibkharch.com;
 
-    root /home/riduan/projects/jebkharch/apps/web/dist;
+    root /var/www/web;
     index index.html;
 
     # SPA fallback — serve index.html for all routes

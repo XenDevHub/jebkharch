@@ -6,7 +6,7 @@ server {
     listen [::]:80;
     server_name admin.jaibkharch.com;
 
-    root /home/riduan/projects/jebkharch/apps/admin/dist;
+    root /var/www/admin;
     index index.html;
 
     # SPA fallback
