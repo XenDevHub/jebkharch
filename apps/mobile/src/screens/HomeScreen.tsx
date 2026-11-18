@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, ActivityIndicator,
+  TouchableOpacity, RefreshControl, ActivityIndicator, Image,
 } from 'react-native';
 import Animated, {
   FadeInDown, FadeInRight,
@@ -171,9 +171,17 @@ export default function HomeScreen({ navigation }: any) {
               colors={[`${colors.primary}40`, `${colors.primary}15`]}
               style={styles.avatar}
             >
-              <Text style={styles.avatarText}>
-                {userName.charAt(0).toUpperCase()}
-              </Text>
+              {profileData?.avatarUrl ? (
+                <Image
+                  source={{ uri: profileData.avatarUrl }}
+                  style={styles.avatarImg}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {userName.charAt(0).toUpperCase()}
+                </Text>
+              )}
             </LinearGradient>
             <View>
               <Text style={styles.greeting}>Hey, {userName} 👋</Text>
@@ -482,6 +490,10 @@ const styles = StyleSheet.create({
     width: 48, height: 48, borderRadius: 24,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 1.5, borderColor: `${colors.primary}60`,
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: 48, height: 48, borderRadius: 24,
   },
   avatarText: { ...typography.headlineSm, color: colors.primary },
   greeting: { ...typography.labelMd, fontSize: 16, color: colors.white },

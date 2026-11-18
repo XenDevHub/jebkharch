@@ -250,6 +250,14 @@ export class QuizService {
           },
         });
 
+        // Award points to the user's Clan/Team if they belong to one
+        if (user?.teamId && correctCount > 0) {
+          await tx.team.update({
+            where: { id: user.teamId },
+            data: { score: { increment: correctCount * 10 } },
+          }).catch(() => null);
+        }
+
         await tx.walletTransaction.create({
           data: {
             id: uuidv4(),

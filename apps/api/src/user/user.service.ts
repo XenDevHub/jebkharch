@@ -16,6 +16,10 @@ export class UserService {
         avatarUrl: true, coins: true, xp: true, rank: true,
         isPro: true, referralCode: true, isBanned: true, createdAt: true,
         currentStreak: true, longestStreak: true, streakFreezes: true,
+        teamId: true,
+        team: {
+          select: { id: true, name: true, logo: true, score: true }
+        },
       },
     });
     if (!user) throw new NotFoundException('User not found.');
@@ -48,11 +52,11 @@ export class UserService {
     };
   }
 
-  async updateProfile(userId: string, updates: Partial<{ name: string; email: string; dob: Date; easypaisaNumber: string }>) {
+  async updateProfile(userId: string, updates: Partial<{ name: string; email: string; dob: Date; easypaisaNumber: string; avatarUrl: string }>) {
     return this.prisma.user.update({
       where: { id: userId },
       data: updates,
-      select: { id: true, name: true, email: true, dob: true },
+      select: { id: true, name: true, email: true, dob: true, avatarUrl: true },
     });
   }
 

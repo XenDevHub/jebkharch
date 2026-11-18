@@ -12,6 +12,7 @@ class UpdateProfileDto {
   @ApiPropertyOptional() @IsOptional() @IsEmail() email?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() dob?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() easypaisaNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() avatarUrl?: string;
 }
 
 class PushTokenDto {

@@ -101,7 +101,7 @@ export const api = {
     getProfile: async () => {
       return apiClient.get('/user/profile');
     },
-    updateProfile: async (updates: { name: string; email?: string; dob?: string; easypaisaNumber?: string }) => {
+    updateProfile: async (updates: { name?: string; email?: string; dob?: string; easypaisaNumber?: string; avatarUrl?: string }) => {
       return apiClient.patch('/user/update', updates);
     },
     getLeaderboard: async () => {

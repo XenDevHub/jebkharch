@@ -1,6 +1,6 @@
 // src/screens/LeaderboardScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -62,7 +62,11 @@ export default function LeaderboardScreen({ navigation }: Props) {
           #{item.rank}
         </Text>
         <View style={styles.avatarCircle}>
-          <Text style={styles.avatarIcon}>{item.avatar || '👤'}</Text>
+          {item.avatar?.startsWith('http') ? (
+            <Image source={{ uri: item.avatar }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />
+          ) : (
+            <Text style={styles.avatarIcon}>{item.avatar || '👤'}</Text>
+          )}
         </View>
         <Text style={[styles.playerName, item.isCurrentUser && styles.currentUserName]} numberOfLines={1}>
           {item.name}
@@ -116,7 +120,11 @@ export default function LeaderboardScreen({ navigation }: Props) {
                   {/* #2 Player */}
                   {top3[1] && (
                     <View style={styles.podiumItem}>
-                      <Text style={styles.podiumAvatar}>{top3[1].avatar || '🥈'}</Text>
+                      {top3[1].avatar?.startsWith('http') ? (
+                        <Image source={{ uri: top3[1].avatar }} style={styles.podiumAvatarImg} resizeMode="cover" />
+                      ) : (
+                        <Text style={styles.podiumAvatar}>{top3[1].avatar || '🥈'}</Text>
+                      )}
                       <Text style={styles.podiumName} numberOfLines={1}>{top3[1].name}</Text>
                       <Text style={styles.podiumScore}>{top3[1].score} pts</Text>
                       <PodiumBlock height={65} color={colors.silver} rank="#2" />
@@ -129,7 +137,11 @@ export default function LeaderboardScreen({ navigation }: Props) {
                       <View style={styles.crownBadge}>
                         <Text style={{ fontSize: 20 }}>👑</Text>
                       </View>
-                      <Text style={[styles.podiumAvatar, { fontSize: 38 }]}>{top3[0].avatar || '🥇'}</Text>
+                      {top3[0].avatar?.startsWith('http') ? (
+                        <Image source={{ uri: top3[0].avatar }} style={[styles.podiumAvatarImg, { width: 48, height: 48, borderRadius: 24 }]} resizeMode="cover" />
+                      ) : (
+                        <Text style={[styles.podiumAvatar, { fontSize: 38 }]}>{top3[0].avatar || '🥇'}</Text>
+                      )}
                       <Text style={[styles.podiumName, { fontWeight: '700', color: colors.secondary }]} numberOfLines={1}>
                         {top3[0].name}
                       </Text>
@@ -141,7 +153,11 @@ export default function LeaderboardScreen({ navigation }: Props) {
                   {/* #3 Player */}
                   {top3[2] && (
                     <View style={styles.podiumItem}>
-                      <Text style={styles.podiumAvatar}>{top3[2].avatar || '🥉'}</Text>
+                      {top3[2].avatar?.startsWith('http') ? (
+                        <Image source={{ uri: top3[2].avatar }} style={styles.podiumAvatarImg} resizeMode="cover" />
+                      ) : (
+                        <Text style={styles.podiumAvatar}>{top3[2].avatar || '🥉'}</Text>
+                      )}
                       <Text style={styles.podiumName} numberOfLines={1}>{top3[2].name}</Text>
                       <Text style={styles.podiumScore}>{top3[2].score} pts</Text>
                       <PodiumBlock height={50} color={colors.bronze} rank="#3" />
@@ -229,6 +245,12 @@ const styles = StyleSheet.create({
   },
   podiumAvatar: {
     fontSize: 32,
+    marginBottom: 4,
+  },
+  podiumAvatarImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginBottom: 4,
   },
   podiumName: {

@@ -1,6 +1,6 @@
 // src/screens/ProfileScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, RefreshControl, Image } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import BottomNav from '../components/BottomNav';
 import AnimatedNumber from '../components/AnimatedNumber';
+import AvatarPickerModal from '../components/AvatarPickerModal';
 import { useProfile, useWalletBalance, useInvalidateQueries, QUERY_KEYS } from '../hooks/useAppData';
 
 type Props = {
@@ -31,6 +32,22 @@ export default function ProfileScreen({ navigation }: Props) {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+
+  const handleSelectAvatar = async (avatarUrl: string) => {
+    setSavingAvatar(true);
+    try {
+      await api.user.updateProfile({ avatarUrl });
+      invalidateProfile();
+      setShowAvatarModal(false);
+      Alert.alert('Success', 'Avatar updated! Looking sharp! ✨');
+    } catch (e: any) {
+      Alert.alert('Error', e.response?.data?.message || 'Failed to update avatar');
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   // Sync edit fields when profile loads
   React.useEffect(() => {
@@ -122,13 +139,24 @@ export default function ProfileScreen({ navigation }: Props) {
             end={{ x: 1, y: 1 }}
             style={styles.profileCard}
           >
-            <View style={styles.avatarGlowRing}>
+            <TouchableOpacity
+              style={styles.avatarGlowRing}
+              onPress={() => setShowAvatarModal(true)}
+              activeOpacity={0.8}
+            >
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {(editName || displayName).charAt(0).toUpperCase()}
-                </Text>
+                {profile?.avatarUrl ? (
+                  <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {(editName || displayName).charAt(0).toUpperCase()}
+                  </Text>
+                )}
               </View>
-            </View>
+              <View style={styles.avatarEditBadge}>
+                <Ionicons name="camera" size={12} color={colors.white} />
+              </View>
+            </TouchableOpacity>
 
             {isEditing ? (
               <View style={styles.editForm}>
@@ -167,6 +195,15 @@ export default function ProfileScreen({ navigation }: Props) {
                 </View>
                 <Text style={styles.userPhone}>{phone || '+92 300 0000000'}</Text>
                 {profile?.email ? <Text style={styles.userEmail}>{profile.email}</Text> : null}
+                {profile?.team ? (
+                  <TouchableOpacity
+                    style={styles.clanProfilePill}
+                    onPress={() => navigation.navigate('Teams' as any)}
+                  >
+                    <Ionicons name="shield-checkmark" size={13} color="#34d399" />
+                    <Text style={styles.clanProfilePillText}>Clan: {profile.team.name} • {profile.team.score} 🏆</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             )}
 
@@ -344,6 +381,14 @@ export default function ProfileScreen({ navigation }: Props) {
         </Animated.View>
       </ScrollView>
 
+      <AvatarPickerModal
+        visible={showAvatarModal}
+        currentAvatarUrl={profile?.avatarUrl}
+        onSelect={handleSelectAvatar}
+        onClose={() => setShowAvatarModal(false)}
+        saving={savingAvatar}
+      />
+
       <BottomNav active="Profile" navigation={navigation} />
     </View>
   );
@@ -414,6 +459,43 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: colors.primary,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#002a1e',
+  },
+  clanProfilePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.pill,
+    marginTop: 4,
+    marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+  },
+  clanProfilePillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#34d399',
   },
   avatarText: {
     ...typography.headlineSm,
