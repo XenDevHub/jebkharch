@@ -21,4 +21,9 @@ export class BonusController {
   watchAd(@Request() req: any, @Body() body: { adType: string; rewardType: 'coins' | 'life' }) {
     return this.bonusService.watchAd(req.user.id, body.adType, body.rewardType);
   }
+
+  @Post('refill-coins')
+  refillWithCoins(@Request() req: any) {
+    return this.bonusService.refillWithCoins(req.user.id);
+  }
 }

@@ -249,6 +249,7 @@ export const api = {
     getLives: async () => apiClient.get('/bonus/lives'),
     spinWheel: async () => apiClient.post('/bonus/spin'),
     watchAd: async (adType: string, rewardType: 'coins' | 'life') => apiClient.post('/bonus/watch-ad', { adType, rewardType }),
+    refillWithCoins: async () => apiClient.post('/bonus/refill-coins'),
   },
   team: {
     getTeams: async () => apiClient.get('/teams'),

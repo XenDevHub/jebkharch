@@ -77,6 +77,11 @@ export class QuizService {
       throw new BadRequestException(`Insufficient coins. You need ${COIN_CONSTANTS.NORMAL_QUIZ_ENTRY} coins to play.`);
     }
 
+    // Check lives (hearts)
+    if (user.lives <= 0) {
+      throw new BadRequestException('Out of lives! ❤️ Watch an ad or refill with coins to continue playing.');
+    }
+
     // Check daily earning cap (to prevent infinite farming)
     const todayEarned = await this.getTodayEarned(userId);
     // Still allow playing even at cap — just won't earn rewards
@@ -84,12 +89,20 @@ export class QuizService {
     // Fetch questions (ensure no repeats until pool exhausted)
     const questions = await this.fetchQuestionsForCategory(userId, categoryId, QUIZ_CONSTANTS.QUESTIONS_PER_SESSION);
 
-    // Atomic: deduct entry fee + create session
+    // Atomic: deduct entry fee + 1 life + create session
     const session = await this.prisma.$transaction(async (tx) => {
-      // Deduct coins
+      // Deduct coins & 1 life
+      const userUpdateData: any = {
+        coins: { decrement: COIN_CONSTANTS.NORMAL_QUIZ_ENTRY },
+        lives: { decrement: 1 },
+      };
+      if (user.lives >= 5) {
+        userUpdateData.lastLifeRefillAt = new Date();
+      }
+
       await tx.user.update({
         where: { id: userId },
-        data: { coins: { decrement: COIN_CONSTANTS.NORMAL_QUIZ_ENTRY } },
+        data: userUpdateData,
       });
 
       await tx.walletTransaction.create({

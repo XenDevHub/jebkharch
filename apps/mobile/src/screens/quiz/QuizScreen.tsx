@@ -12,7 +12,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
+import { QUERY_KEYS } from '../../hooks/useAppData';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Quiz'>;
 
@@ -135,6 +137,7 @@ function QuizLoadingView({ categoryName }: { categoryName: string }) {
 
 export default function QuizScreen({ route, navigation }: Props) {
   const { categoryId, categoryName } = route.params;
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -203,6 +206,9 @@ export default function QuizScreen({ route, navigation }: Props) {
       setSessionId(res.data.sessionId);
       setQuestions(res.data.questions);
       progressAnim.value = withTiming(1 / res.data.questions.length, { duration: 500 });
+      // Invalidate lives & wallet queries so energy & coins update immediately
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.lives });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
     } catch (err: any) {
       console.log(err);
       const msg = err?.response?.data?.message || 'Quiz shuru nahi ho saki. Dobara koshish karein.';

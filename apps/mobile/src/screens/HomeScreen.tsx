@@ -15,6 +15,7 @@ import GlassCard from '../components/GlassCard';
 import BottomNav from '../components/BottomNav';
 import PulsingDot from '../components/PulsingDot';
 import AnimatedNumber from '../components/AnimatedNumber';
+import LivesModal from '../components/LivesModal';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme/designSystem';
 import { api } from '../api/client';
 import {
@@ -77,7 +78,16 @@ export default function HomeScreen({ navigation }: any) {
 
   const [refreshing, setRefreshing] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showLivesModal, setShowLivesModal] = useState(false);
   const countdown = useCountdown(TOURNAMENT_SECONDS);
+
+  const startQuiz = (categoryId: string, categoryName: string) => {
+    if (lives <= 0) {
+      setShowLivesModal(true);
+      return;
+    }
+    navigation.navigate('Quiz', { categoryId, categoryName });
+  };
 
   // Sync push token with backend whenever Home is viewed
   React.useEffect(() => {
@@ -190,7 +200,7 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-            <TouchableOpacity style={styles.walletChip} onPress={() => navigation.navigate('Spin')}>
+            <TouchableOpacity style={styles.walletChip} onPress={() => setShowLivesModal(true)}>
               <Text style={{ fontSize: 14 }}>❤️</Text>
               <Text style={styles.walletText}>{lives}</Text>
             </TouchableOpacity>
@@ -257,10 +267,7 @@ export default function HomeScreen({ navigation }: any) {
             onPress={() => {
               const dailyCat = categories.find((c: any) => !c.isPremium) || categories[0];
               if (dailyCat) {
-                navigation.navigate('Quiz', {
-                  categoryId: dailyCat.id,
-                  categoryName: `${dailyCat.name} (Daily Challenge)`,
-                });
+                startQuiz(dailyCat.id, `${dailyCat.name} (Daily Challenge)`);
               }
             }}
           >
@@ -295,7 +302,7 @@ export default function HomeScreen({ navigation }: any) {
             onPress={() => {
               const tournamentCat = categories.find((c: any) => !c.isPremium) || categories[0];
               if (tournamentCat) {
-                navigation.navigate('Quiz', { categoryId: tournamentCat.id, categoryName: tournamentCat.name });
+                startQuiz(tournamentCat.id, tournamentCat.name);
               }
             }}
           >
@@ -336,7 +343,7 @@ export default function HomeScreen({ navigation }: any) {
                     onPress={() => {
                       const tournamentCat = categories.find((c: any) => !c.isPremium) || categories[0];
                       if (tournamentCat) {
-                        navigation.navigate('Quiz', { categoryId: tournamentCat.id, categoryName: tournamentCat.name });
+                        startQuiz(tournamentCat.id, tournamentCat.name);
                       }
                     }}
                   >
@@ -435,11 +442,18 @@ export default function HomeScreen({ navigation }: any) {
               icon={cat.icon}
               isPremium={cat.isPremium}
               delay={i * 60}
-              onPress={() => navigation.navigate('Quiz', { categoryId: cat.id, categoryName: cat.name })}
+              onPress={() => startQuiz(cat.id, cat.name)}
             />
           ))}
         </View>
       </ScrollView>
+
+      <LivesModal
+        visible={showLivesModal}
+        lives={lives}
+        nextRefillInSeconds={livesData?.nextRefillInSeconds || 0}
+        onClose={() => setShowLivesModal(false)}
+      />
 
       <BottomNav active="Home" navigation={navigation} />
 

@@ -135,4 +135,43 @@ export class BonusService {
 
     return { success: true, rewardType, rewardCoins };
   }
+
+  async refillWithCoins(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+    if (user.lives >= this.MAX_LIVES) throw new BadRequestException('You already have maximum lives!');
+
+    const missingLives = this.MAX_LIVES - user.lives;
+    const cost = missingLives * 10;
+
+    if (user.coins < cost) {
+      throw new BadRequestException(`Insufficient coins. You need ${cost} coins to refill ${missingLives} lives.`);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          coins: { decrement: cost },
+          lives: this.MAX_LIVES,
+          lastLifeRefillAt: new Date(),
+        },
+      });
+
+      await tx.walletTransaction.create({
+        data: {
+          id: uuidv4(),
+          userId,
+          type: TransactionType.DEBIT,
+          amount: cost,
+          source: TransactionSource.ADMIN_ADJUSTMENT as any,
+          description: `Refilled ${missingLives} lives with coins`,
+          balanceBefore: user.coins,
+          balanceAfter: user.coins - cost,
+        },
+      });
+    });
+
+    return { success: true, lives: this.MAX_LIVES };
+  }
 }
