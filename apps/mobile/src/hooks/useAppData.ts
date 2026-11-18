@@ -1,7 +1,36 @@
 // src/hooks/useAppData.ts
-// Centralized React Query hooks for all app data with smart caching
+// Centralized React Query hooks for all app data with smart persistent caching
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../api/client';
+
+// ── Persistent Cache Storage Keys ──
+const CACHE_STORAGE_KEYS = {
+  profile: '@cache_profile_data',
+  balance: '@cache_wallet_balance',
+  tickets: '@cache_tickets_balance',
+};
+
+// In-memory instant cache to provide 0ms synchronous fallback on mount
+let inMemoryProfile: any = null;
+let inMemoryBalance: number | null = null;
+let inMemoryTickets: number | null = null;
+
+// Preload cache from AsyncStorage at startup so data is immediately available
+(async () => {
+  try {
+    const [savedProfile, savedBalance, savedTickets] = await Promise.all([
+      AsyncStorage.getItem(CACHE_STORAGE_KEYS.profile),
+      AsyncStorage.getItem(CACHE_STORAGE_KEYS.balance),
+      AsyncStorage.getItem(CACHE_STORAGE_KEYS.tickets),
+    ]);
+    if (savedProfile) inMemoryProfile = JSON.parse(savedProfile);
+    if (savedBalance !== null) inMemoryBalance = JSON.parse(savedBalance);
+    if (savedTickets !== null) inMemoryTickets = JSON.parse(savedTickets);
+  } catch {
+    // Non-blocking fallback
+  }
+})();
 
 // ── Query Keys (constants for cache identity) ──
 export const QUERY_KEYS = {
@@ -20,15 +49,20 @@ export const QUERY_KEYS = {
   tickets: ['tickets'] as const,
 };
 
-// ── Profile ──
+// ── Profile (with persistent cache for name, avatar, coins, performance stats & rank) ──
 export function useProfile() {
   return useQuery({
     queryKey: QUERY_KEYS.profile,
     queryFn: async () => {
       const res = await api.user.getProfile();
+      if (res?.data) {
+        inMemoryProfile = res.data;
+        AsyncStorage.setItem(CACHE_STORAGE_KEYS.profile, JSON.stringify(res.data)).catch(() => null);
+      }
       return res.data;
     },
-    staleTime: 2 * 60 * 1000, // 2 min
+    placeholderData: (previousData) => previousData ?? inMemoryProfile,
+    staleTime: 5 * 60 * 1000, // 5 min
   });
 }
 
@@ -44,15 +78,19 @@ export function useCategories() {
   });
 }
 
-// ── Wallet Balance ──
+// ── Wallet Balance (with persistent cache for instant coins display on Home & Profile) ──
 export function useWalletBalance() {
   return useQuery({
     queryKey: QUERY_KEYS.walletBalance,
     queryFn: async () => {
       const res = await api.wallet.getBalance();
-      return res.data.balance ?? 0;
+      const bal = res.data?.balance ?? 0;
+      inMemoryBalance = bal;
+      AsyncStorage.setItem(CACHE_STORAGE_KEYS.balance, JSON.stringify(bal)).catch(() => null);
+      return bal;
     },
-    staleTime: 60 * 1000, // 1 min
+    placeholderData: (previousData) => previousData ?? inMemoryBalance ?? 0,
+    staleTime: 5 * 60 * 1000, // 5 min
   });
 }
 
@@ -80,15 +118,19 @@ export function useLives() {
   });
 }
 
-// ── Tickets ──
+// ── Tickets (with persistent cache) ──
 export function useTickets() {
   return useQuery({
     queryKey: QUERY_KEYS.tickets,
     queryFn: async () => {
       const res = await api.tickets.getBalance();
-      return res.data?.tournamentTickets ?? 0;
+      const t = res.data?.tournamentTickets ?? 0;
+      inMemoryTickets = t;
+      AsyncStorage.setItem(CACHE_STORAGE_KEYS.tickets, JSON.stringify(t)).catch(() => null);
+      return t;
     },
-    staleTime: 60 * 1000,
+    placeholderData: (previousData) => previousData ?? inMemoryTickets ?? 0,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
