@@ -53,7 +53,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <Stack.Navigator
+        initialRouteName="Splash"
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          animationDuration: 200, // Snappy & responsive fade transition
+        }}
+      >
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />

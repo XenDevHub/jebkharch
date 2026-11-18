@@ -14,6 +14,9 @@ export const apiClient = axios.create({
   },
 });
 
+// In-memory cache for deviceId so we don't hit AsyncStorage on every single HTTP request
+let cachedDeviceId: string | null = null;
+
 // Interceptor to attach the auth token and device ID to every request
 apiClient.interceptors.request.use(
   async (config) => {
@@ -22,14 +25,15 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Attach device ID for fraud tracking/device sessions
-    let deviceId = await AsyncStorage.getItem('deviceId');
-    if (!deviceId) {
-      // In a real app, you might use expo-application's getIosIdForVendorAsync or expo-device
-      deviceId = `${Device.osName}-${Device.osVersion}-${Math.random().toString(36).substring(7)}`;
-      await AsyncStorage.setItem('deviceId', deviceId);
+    // Attach device ID for fraud tracking/device sessions (cached in memory)
+    if (!cachedDeviceId) {
+      cachedDeviceId = await AsyncStorage.getItem('deviceId');
+      if (!cachedDeviceId) {
+        cachedDeviceId = `${Device.osName}-${Device.osVersion}-${Math.random().toString(36).substring(7)}`;
+        await AsyncStorage.setItem('deviceId', cachedDeviceId);
+      }
     }
-    config.headers['x-device-id'] = deviceId;
+    config.headers['x-device-id'] = cachedDeviceId;
 
     return config;
   },

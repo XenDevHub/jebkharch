@@ -43,7 +43,14 @@ const FALLBACK_CATEGORIES = [
 // Fixed tournament end time (2h45m from now for demo)
 const TOURNAMENT_SECONDS = 2 * 60 * 60 + 45 * 60 + 10;
 
-function useCountdown(initialSeconds: number) {
+// Isolated countdown component — only this text re-renders every second, NOT the whole HomeScreen
+const TournamentCountdown = React.memo(function TournamentCountdown({
+  initialSeconds,
+  style,
+}: {
+  initialSeconds: number;
+  style?: any;
+}) {
   const [seconds, setSeconds] = useState(initialSeconds);
   React.useEffect(() => {
     const t = setInterval(() => setSeconds(s => Math.max(0, s - 1)), 1000);
@@ -52,8 +59,12 @@ function useCountdown(initialSeconds: number) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
+  return (
+    <Text style={style}>
+      {`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`}
+    </Text>
+  );
+});
 
 export default function HomeScreen({ navigation }: any) {
   const queryClient = useQueryClient();
@@ -84,7 +95,6 @@ export default function HomeScreen({ navigation }: any) {
   const [showLivesModal, setShowLivesModal] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
-  const countdown = useCountdown(TOURNAMENT_SECONDS);
 
   const startQuiz = (categoryId: string, categoryName: string) => {
     if (lives <= 0) {
@@ -94,9 +104,26 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('Quiz', { categoryId, categoryName });
   };
 
-  // Sync push token with backend whenever Home is viewed
+  // Sync push token with backend whenever Home is viewed, and pre-fetch common screens in background
   React.useEffect(() => {
     syncPushTokenWithBackend();
+
+    // Pre-fetch commonly visited screens in background for instant, 0ms transitions
+    queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.leaderboard,
+      queryFn: async () => (await api.user.getLeaderboard()).data,
+      staleTime: 2 * 60 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.missions,
+      queryFn: async () => (await api.missions.getMissions()).data,
+      staleTime: 60 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.achievements,
+      queryFn: async () => (await api.missions.getAchievements()).data,
+      staleTime: 5 * 60 * 1000,
+    });
   }, []);
 
   const [adActive, setAdActive] = useState(false);
@@ -393,7 +420,7 @@ export default function HomeScreen({ navigation }: any) {
                   <View style={styles.heroMetaDivider} />
                   <View style={styles.heroMetaItem}>
                     <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
-                    <Text style={styles.heroMetaText}>{countdown}</Text>
+                    <TournamentCountdown initialSeconds={TOURNAMENT_SECONDS} style={styles.heroMetaText} />
                   </View>
                 </View>
 
