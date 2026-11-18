@@ -14,7 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import GlassCard from '../components/GlassCard';
 import BottomNav from '../components/BottomNav';
 import PulsingDot from '../components/PulsingDot';
-import AnimatedNumber from '../components/AnimatedNumber';
+import AnimatedNumber, { formatCompactNumber } from '../components/AnimatedNumber';
 import LivesModal from '../components/LivesModal';
 import StreakModal from '../components/StreakModal';
 import TicketModal from '../components/TicketModal';
@@ -293,7 +293,7 @@ export default function HomeScreen({ navigation }: any) {
           >
             <View style={styles.hudChipTop}>
               <Text style={styles.hudIcon}>🎟️</Text>
-              <Text style={[styles.hudValue, { color: '#c084fc' }]}>{tickets}</Text>
+              <Text style={[styles.hudValue, { color: '#c084fc' }]}>{formatCompactNumber(tickets)}</Text>
             </View>
             <Text style={styles.hudLabel}>Tickets</Text>
           </TouchableOpacity>
@@ -316,6 +316,7 @@ export default function HomeScreen({ navigation }: any) {
                   value={balance}
                   style={styles.hudCoinsValue}
                   duration={800}
+                  formatter={formatCompactNumber}
                 />
               </View>
               <Text style={styles.hudLabel}>Coins</Text>

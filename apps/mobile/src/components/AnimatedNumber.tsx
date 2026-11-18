@@ -12,6 +12,25 @@ import { Text } from 'react-native';
 // We use a JS-driven approach since animating text is tricky with reanimated
 // This creates a smooth count-up using setInterval
 
+// Utility function to format large numbers compactly (e.g. 500, 1.2k, 25k, 1.5M, 2.3B)
+export function formatCompactNumber(num: number): string {
+  if (!num || isNaN(num) || num === 0) return '0';
+  if (num < 1000) return num.toString();
+  if (num < 10000) {
+    const k = (num / 1000).toFixed(1);
+    return k.endsWith('.0') ? `${parseInt(k, 10)}k` : `${k}k`;
+  }
+  if (num < 1000000) {
+    return `${Math.floor(num / 1000)}k`;
+  }
+  if (num < 1000000000) {
+    const m = (num / 1000000).toFixed(1);
+    return m.endsWith('.0') ? `${parseInt(m, 10)}M` : `${m}M`;
+  }
+  const b = (num / 1000000000).toFixed(1);
+  return b.endsWith('.0') ? `${parseInt(b, 10)}B` : `${b}B`;
+}
+
 type Props = {
   value: number;
   duration?: number;
