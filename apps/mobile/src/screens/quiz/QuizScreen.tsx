@@ -257,12 +257,24 @@ export default function QuizScreen({ route, navigation }: Props) {
     } else {
       try {
         const res = await api.quiz.completeSession(sessionId!);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
         navigation.replace('QuizResult', {
           score: res.data.score,
           total: res.data.total,
           coinsEarned: res.data.coinsEarned,
+          categoryId,
+          categoryName,
         });
-      } catch {}
+      } catch {
+        navigation.replace('QuizResult', {
+          score: 0,
+          total: questions.length,
+          coinsEarned: 0,
+          categoryId,
+          categoryName,
+        });
+      }
     }
   };
 

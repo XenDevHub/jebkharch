@@ -81,7 +81,7 @@ export const COIN_CONSTANTS = {
   CHALLENGE_WIN_POT: 200, // winner takes all
   AD_REWARD_MIN: 1,
   AD_REWARD_MAX: 3,
-  DAILY_EARNING_CAP: 50,
+  DAILY_EARNING_CAP: 500,
   DAILY_AD_WATCH_CAP: 10,
   MIN_WITHDRAWAL: 500,
   WITHDRAWAL_COOLDOWN_HOURS: 24,
@@ -89,10 +89,12 @@ export const COIN_CONSTANTS = {
 } as const;
 
 export const QUIZ_REWARDS: Record<number, number> = {
-  10: 15, // perfect score
-  9: 8,
-  8: 5,
-  // 7 and below = 0 coins
+  10: 15, // perfect score (10/10)
+  9: 10,  // 9/10
+  8: 7,   // 8/10
+  7: 5,   // 7/10 — entry fee returned
+  6: 3,   // 6/10 — passed
+  // 5 and below = 0 coins
 };
 
 export const QUIZ_CONSTANTS = {

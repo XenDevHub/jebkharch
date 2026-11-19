@@ -227,10 +227,11 @@ export class QuizService {
     // Determine reward
     const rawReward = QUIZ_REWARDS[correctCount] ?? 0;
 
-    // Apply daily earning cap
+    // Apply daily earning cap (only quiz gameplay earnings, excludes missions/challenges)
     const todayEarned = await this.getTodayEarned(userId);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const remainingCap = Math.max(0, COIN_CONSTANTS.DAILY_EARNING_CAP - todayEarned);
+    const dailyCap = parseInt(this.config.get('DAILY_EARNING_CAP') || '500', 10);
+    const remainingCap = Math.max(0, dailyCap - todayEarned);
     const coinsWon = Math.min(rawReward, remainingCap);
 
     // Apply Pro XP multiplier
@@ -531,7 +532,8 @@ Return ONLY a valid JSON object with a "questions" key containing an array of qu
       where: {
         userId,
         type: TransactionType.CREDIT,
-        source: { in: [TransactionSource.QUIZ_REWARD as any, TransactionSource.CHALLENGE_WIN as any, TransactionSource.AD_REWARD as any] },
+        source: TransactionSource.QUIZ_REWARD as any,
+        description: { startsWith: 'Quiz reward:' },
         createdAt: { gte: todayStart },
         status: TransactionStatus.COMPLETED,
       },

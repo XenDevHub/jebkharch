@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme/designSystem';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '../../hooks/useAppData';
 import AnimatedNumber from '../../components/AnimatedNumber';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuizResult'>;
@@ -78,7 +80,8 @@ function ConfettiParticle({ index }: { index: number }) {
 }
 
 export default function QuizResultScreen({ route, navigation }: Props) {
-  const { score, total, coinsEarned } = route.params;
+  const { score, total, coinsEarned, categoryId, categoryName } = route.params;
+  const queryClient = useQueryClient();
   const isWinner = score > total / 2;
   const percentage = Math.round((score / total) * 100);
 
@@ -87,6 +90,9 @@ export default function QuizResultScreen({ route, navigation }: Props) {
   const ringScale = useSharedValue(0.5);
 
   useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+
     trophyScale.value = withSpring(1, { damping: 8, stiffness: 100 });
     trophyRotate.value = withSpring(0, { damping: 10 });
     ringScale.value = withSpring(1, { damping: 12 });
@@ -202,7 +208,13 @@ export default function QuizResultScreen({ route, navigation }: Props) {
         <TouchableOpacity
           style={styles.btnWrapper}
           activeOpacity={0.85}
-          onPress={() => navigation.replace('Quiz', route.params as any)}
+          onPress={() => {
+            if (categoryId && categoryName) {
+              navigation.replace('Quiz', { categoryId, categoryName });
+            } else {
+              navigation.navigate('Home');
+            }
+          }}
         >
           <LinearGradient
             colors={[colors.surfaceElevated, colors.surfaceCard]}
@@ -216,7 +228,11 @@ export default function QuizResultScreen({ route, navigation }: Props) {
         <TouchableOpacity
           style={styles.btnWrapper}
           activeOpacity={0.85}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+            navigation.navigate('Home');
+          }}
         >
           <LinearGradient
             colors={[colors.primary, colors.primaryDim]}

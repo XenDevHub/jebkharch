@@ -32,7 +32,7 @@ export type RootStackParamList = {
   CreateProfile: { phone: string; otpCode: string; deviceId: string };
   Home: undefined;
   Quiz: { categoryId: string; categoryName: string };
-  QuizResult: { score: number; total: number; coinsEarned: number };
+  QuizResult: { score: number; total: number; coinsEarned: number; categoryId?: string; categoryName?: string };
   Wallet: undefined;
   Profile: undefined;
   Leaderboard: undefined;
