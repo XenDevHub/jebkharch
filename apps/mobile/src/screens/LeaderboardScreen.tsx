@@ -1,7 +1,7 @@
 // src/screens/LeaderboardScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl, Image } from 'react-native';
-import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../theme/designSystem';
@@ -55,28 +55,26 @@ export default function LeaderboardScreen({ navigation }: Props) {
   const top3 = leaderboard.slice(0, 3);
   const remaining = leaderboard.slice(3);
 
-  const renderItem = ({ item, index }: { item: LeaderboardItem; index: number }) => (
-    <Animated.View entering={FadeInDown.delay(index * 40).springify().damping(15)}>
-      <View style={[styles.rankItem, item.isCurrentUser && styles.currentUserRank]}>
-        <Text style={[styles.rankNumber, item.rank <= 3 && { color: colors.secondary }]}>
-          #{item.rank}
-        </Text>
-        <View style={styles.avatarCircle}>
-          {item.avatar?.startsWith('http') ? (
-            <Image source={{ uri: item.avatar }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />
-          ) : (
-            <Text style={styles.avatarIcon}>{item.avatar || '👤'}</Text>
-          )}
-        </View>
-        <Text style={[styles.playerName, item.isCurrentUser && styles.currentUserName]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <View style={styles.scoreContainer}>
-          <Ionicons name="star" size={14} color={colors.secondary} />
-          <Text style={styles.playerScore}>{item.score.toLocaleString()} pts</Text>
-        </View>
+  const renderItem = ({ item }: { item: LeaderboardItem; index: number }) => (
+    <View style={[styles.rankItem, item.isCurrentUser && styles.currentUserRank]}>
+      <Text style={[styles.rankNumber, item.rank <= 3 && { color: colors.secondary }]}>
+        #{item.rank}
+      </Text>
+      <View style={styles.avatarCircle}>
+        {item.avatar?.startsWith('http') ? (
+          <Image source={{ uri: item.avatar }} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />
+        ) : (
+          <Text style={styles.avatarIcon}>{item.avatar || '👤'}</Text>
+        )}
       </View>
-    </Animated.View>
+      <Text style={[styles.playerName, item.isCurrentUser && styles.currentUserName]} numberOfLines={1}>
+        {item.name}
+      </Text>
+      <View style={styles.scoreContainer}>
+        <Ionicons name="star" size={14} color={colors.secondary} />
+        <Text style={styles.playerScore}>{item.score.toLocaleString()} pts</Text>
+      </View>
+    </View>
   );
 
   return (
@@ -84,13 +82,13 @@ export default function LeaderboardScreen({ navigation }: Props) {
       <LinearGradient colors={['#070d1a', '#0d162a', '#070d1a']} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
-      <Animated.View entering={FadeInDown.delay(50)} style={styles.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Leaderboard</Text>
         <View style={{ width: 40 }} />
-      </Animated.View>
+      </View>
 
       {loading && leaderboard.length === 0 ? (
         <View style={styles.centerContainer}>
@@ -106,7 +104,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListHeaderComponent={
-            <Animated.View entering={FadeInDown.delay(100)}>
+            <View>
               {/* Podium Header for Top 3 */}
               <LinearGradient
                 colors={[colors.primaryDim, '#004d35', '#002a1e']}
@@ -167,7 +165,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
               </LinearGradient>
 
               <Text style={styles.sectionHeaderTitle}>Global Rankings</Text>
-            </Animated.View>
+            </View>
           }
         />
       )}

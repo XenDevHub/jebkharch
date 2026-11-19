@@ -5,7 +5,6 @@ import {
   TouchableOpacity, RefreshControl, ActivityIndicator, Image,
 } from 'react-native';
 import Animated, {
-  FadeInDown, FadeInRight,
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -190,7 +189,7 @@ export default function HomeScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Top Bar: Tier 1 (Profile & Quick Actions) ── */}
-        <Animated.View entering={FadeInDown.delay(50)} style={styles.headerTier1}>
+        <View style={styles.headerTier1}>
           <TouchableOpacity
             style={styles.userInfo}
             onPress={() => navigation.navigate('Profile')}
@@ -238,10 +237,10 @@ export default function HomeScreen({ navigation }: any) {
               <Ionicons name="settings-outline" size={19} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
 
         {/* ── Top Bar: Tier 2 (Balanced 4-Chip Status HUD) ── */}
-        <Animated.View entering={FadeInDown.delay(90)} style={styles.hudContainer}>
+        <View style={styles.hudContainer}>
           {/* 1. ❤️ Lives */}
           <TouchableOpacity
             style={[styles.hudChip, { borderColor: 'rgba(244, 63, 94, 0.35)', backgroundColor: 'rgba(244, 63, 94, 0.1)' }]}
@@ -305,10 +304,10 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.hudLabel}>Coins</Text>
             </TouchableOpacity>
           </Animated.View>
-        </Animated.View>
+        </View>
 
         {/* ── Daily Spin & Missions ── */}
-        <Animated.View entering={FadeInDown.delay(120)}>
+        <View>
           <View style={{ flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.lg, marginTop: spacing.md }}>
             <TouchableOpacity 
               style={[styles.actionCard, { flex: 1, backgroundColor: `${colors.primary}20`, borderColor: colors.primary }]}
@@ -328,10 +327,10 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.actionCardDesc}>Earn Coins</Text>
             </TouchableOpacity>
           </View>
-        </Animated.View>
+        </View>
 
         {/* ── Daily Challenge Banner ── */}
-        <Animated.View entering={FadeInDown.delay(100)}>
+        <View style={{ marginTop: spacing.md }}>
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.dailyCard}
@@ -363,10 +362,10 @@ export default function HomeScreen({ navigation }: any) {
               </View>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* ── Hero Banner ── */}
-        <Animated.View entering={FadeInDown.delay(150)}>
+        <View style={{ marginTop: spacing.md }}>
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.heroBanner}
@@ -425,10 +424,10 @@ export default function HomeScreen({ navigation }: any) {
               </View>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* ── Quick Stats ── */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.statsRow}>
+        <View style={styles.statsRow}>
           {[
             { icon: 'trophy', color: colors.secondary, value: String(userStats.wins), label: 'Wins' },
             { icon: 'game-controller', color: colors.primary, value: String(userStats.played), label: 'Played' },
@@ -447,10 +446,10 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.statLabel}>{stat.label}</Text>
             </TouchableOpacity>
           ))}
-        </Animated.View>
+        </View>
 
         {/* ── Earn Extra Coins Banner ── */}
-        <Animated.View entering={FadeInDown.delay(220)}>
+        <View style={{ marginTop: spacing.sm }}>
           <TouchableOpacity activeOpacity={0.9} style={styles.adCard} onPress={watchAd}>
             <LinearGradient
               colors={[`${colors.primary}25`, `${colors.primary}08`]}
@@ -467,10 +466,10 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={{ fontSize: 44 }}>🎥</Text>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* ── Challenge a Friend Banner ── */}
-        <Animated.View entering={FadeInDown.delay(240)}>
+        <View style={{ marginTop: spacing.sm }}>
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.challengeCard}
@@ -491,10 +490,10 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={{ fontSize: 44 }}>⚔️</Text>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* ── Categories ── */}
-        <Animated.View entering={FadeInDown.delay(250)} style={styles.sectionHeader}>
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Quiz Categories</Text>
           {categories.length > MAX_VISIBLE_CATEGORIES && (
             <TouchableOpacity onPress={() => setShowAllCategories(!showAllCategories)}>
@@ -503,16 +502,15 @@ export default function HomeScreen({ navigation }: any) {
               </Text>
             </TouchableOpacity>
           )}
-        </Animated.View>
+        </View>
 
         <View style={styles.grid}>
-          {(showAllCategories ? categories : categories.slice(0, MAX_VISIBLE_CATEGORIES)).map((cat, i) => (
+          {(showAllCategories ? categories : categories.slice(0, MAX_VISIBLE_CATEGORIES)).map((cat) => (
             <GlassCard
               key={cat.id}
               title={cat.name}
               icon={cat.icon}
               isPremium={cat.isPremium}
-              delay={i * 60}
               onPress={() => startQuiz(cat.id, cat.name)}
             />
           ))}

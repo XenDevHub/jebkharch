@@ -96,10 +96,13 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   return token;
 }
 
+let pushTokenAlreadySynced = false;
+
 /**
- * Sync existing or new push token whenever user logs in or visits HomeScreen
+ * Sync existing or new push token whenever user logs in or visits HomeScreen (once per session)
  */
 export async function syncPushTokenWithBackend(): Promise<void> {
+  if (pushTokenAlreadySynced) return;
   try {
     const accessToken = await AsyncStorage.getItem('accessToken');
     if (!accessToken) return;
@@ -111,6 +114,7 @@ export async function syncPushTokenWithBackend(): Promise<void> {
       await api.notifications.registerToken(token);
       console.log('Existing push token verified with backend:', token);
     }
+    pushTokenAlreadySynced = true;
   } catch (err: any) {
     console.log('syncPushTokenWithBackend error:', err?.response?.data || err?.message);
   }

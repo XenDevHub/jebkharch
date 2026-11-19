@@ -1,13 +1,6 @@
 // src/components/AnimatedNumber.tsx
 import React, { useEffect } from 'react';
-import { StyleSheet, TextStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-import { Text } from 'react-native';
+import { TextStyle, Text } from 'react-native';
 
 // We use a JS-driven approach since animating text is tricky with reanimated
 // This creates a smooth count-up using setInterval
@@ -44,25 +37,28 @@ type Props = {
 
 export default function AnimatedNumber({
   value,
-  duration = 1200,
+  duration = 600,
   style,
   prefix = '',
   suffix = '',
   formatter,
 }: Props) {
-  const [displayed, setDisplayed] = React.useState(0);
-  const startRef = React.useRef(0);
+  // Initialize with the actual value so it renders immediately with 0ms delay on mount
+  const [displayed, setDisplayed] = React.useState(value);
+  const prevValueRef = React.useRef(value);
   const rafRef = React.useRef<any>(null);
   const startTimeRef = React.useRef<number | null>(null);
 
   useEffect(() => {
-    if (value === 0) {
-      setDisplayed(0);
+    // If value didn't change (e.g. page navigation/revisit), don't trigger animation
+    if (prevValueRef.current === value) {
+      setDisplayed(value);
       return;
     }
 
     const start = displayed;
     const end = value;
+    prevValueRef.current = value;
     startTimeRef.current = null;
 
     const animate = (timestamp: number) => {
@@ -82,7 +78,7 @@ export default function AnimatedNumber({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [value]);
+  }, [value, duration]);
 
   const display = formatter ? formatter(displayed) : displayed.toLocaleString();
 

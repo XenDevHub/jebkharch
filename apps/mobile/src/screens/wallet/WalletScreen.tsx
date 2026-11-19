@@ -6,7 +6,6 @@ import {
   Alert, ScrollView,
 } from 'react-native';
 import Animated, {
-  FadeInDown, FadeInUp,
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
 } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -98,7 +97,7 @@ export default function WalletScreen({ navigation }: Props) {
       <LinearGradient colors={['#070d1a', '#091a14', '#070d1a']} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
-      <Animated.View entering={FadeInDown.delay(50)} style={styles.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </TouchableOpacity>
@@ -109,11 +108,11 @@ export default function WalletScreen({ navigation }: Props) {
         >
           <Ionicons name="time-outline" size={20} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
-      </Animated.View>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Balance Card */}
-        <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.balanceCardWrapper}>
+        <View style={styles.balanceCardWrapper}>
           <LinearGradient
             colors={[colors.primaryDim, '#004d35', '#002a1e']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -153,10 +152,10 @@ export default function WalletScreen({ navigation }: Props) {
               </View>
             </View>
           </LinearGradient>
-        </Animated.View>
+        </View>
 
         {/* Easypaisa badge */}
-        <Animated.View entering={FadeInDown.delay(250)} style={styles.epBadge}>
+        <View style={styles.epBadge}>
           <LinearGradient
             colors={[`${colors.secondary}20`, `${colors.secondary}08`]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -171,10 +170,10 @@ export default function WalletScreen({ navigation }: Props) {
               <Text style={styles.epBadgeText}>SAFE</Text>
             </View>
           </LinearGradient>
-        </Animated.View>
+        </View>
 
         {/* Form */}
-        <Animated.View entering={FadeInDown.delay(300)} style={styles.form}>
+        <View style={styles.form}>
           {/* Amount input */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>
@@ -273,7 +272,7 @@ export default function WalletScreen({ navigation }: Props) {
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

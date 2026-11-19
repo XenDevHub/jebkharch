@@ -1,5 +1,5 @@
 // src/components/GlassCard.tsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius, shadows } from '../theme/designSystem';
@@ -8,8 +8,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  FadeInDown,
 } from 'react-native-reanimated';
 
 type GlassCardProps = {
@@ -27,13 +25,8 @@ const isEmoji = (str?: string) => {
   return !/^[a-z0-9-]+$/.test(str);
 };
 
-export default function GlassCard({ title, icon, onPress, isPremium, delay = 0 }: GlassCardProps) {
+export default function GlassCard({ title, icon, onPress, isPremium }: GlassCardProps) {
   const scale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    glowOpacity.value = withTiming(1, { duration: 600 });
-  }, []);
 
   const handlePressIn = () => {
     scale.value = withSpring(0.93, { damping: 15, stiffness: 300 });
@@ -46,15 +39,8 @@ export default function GlassCard({ title, icon, onPress, isPremium, delay = 0 }
     transform: [{ scale: scale.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
   return (
-    <Animated.View
-      entering={FadeInDown.delay(delay).springify().damping(14)}
-      style={[styles.wrapper, animatedStyle]}
-    >
+    <Animated.View style={[styles.wrapper, animatedStyle]}>
       <TouchableOpacity
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -76,11 +62,10 @@ export default function GlassCard({ title, icon, onPress, isPremium, delay = 0 }
           ]}
         >
           {/* Top glow line */}
-          <Animated.View
+          <View
             style={[
               styles.topGlow,
               { backgroundColor: isPremium ? colors.secondary : colors.primary },
-              glowStyle,
             ]}
           />
 

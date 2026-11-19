@@ -1,7 +1,6 @@
 // src/screens/ProfileScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, RefreshControl, Image } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, typography, spacing, borderRadius } from '../theme/designSystem';
@@ -116,7 +115,7 @@ export default function ProfileScreen({ navigation }: Props) {
       <LinearGradient colors={['#070d1a', '#0a1728', '#070d1a']} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
-      <Animated.View entering={FadeInDown.delay(50)} style={styles.header}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </TouchableOpacity>
@@ -124,7 +123,7 @@ export default function ProfileScreen({ navigation }: Props) {
         <TouchableOpacity onPress={handleLogout} style={styles.logoutHeaderBtn}>
           <Ionicons name="log-out-outline" size={20} color={colors.error} />
         </TouchableOpacity>
-      </Animated.View>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -132,7 +131,7 @@ export default function ProfileScreen({ navigation }: Props) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* User Card */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <View>
           <LinearGradient
             colors={[colors.primaryDim, '#004d35', '#002a1e']}
             start={{ x: 0, y: 0 }}
@@ -212,32 +211,32 @@ export default function ProfileScreen({ navigation }: Props) {
               <AnimatedNumber value={displayBalance} style={styles.balanceText} suffix=" Coins" duration={800} />
             </View>
           </LinearGradient>
-        </Animated.View>
+        </View>
 
         {/* Quick Stats */}
-        <Animated.View entering={FadeInDown.delay(150)} style={styles.statsContainer}>
+        <View style={styles.statsContainer}>
           <Text style={styles.sectionTitle}>Performance Stats</Text>
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🏆</Text>
-              <AnimatedNumber value={profile?.stats?.challengeWinRate || 0} style={styles.statValue} suffix="%" duration={600} />
+              <AnimatedNumber value={profile?.stats?.challengeWinRate || 0} style={styles.statValue} suffix="%" duration={400} />
               <Text style={styles.statLabel}>Challenge Win Rate</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🎯</Text>
-              <AnimatedNumber value={(profile?.stats?.totalQuizzes || 0) + (profile?.stats?.totalChallenges || 0)} style={styles.statValue} duration={600} />
+              <AnimatedNumber value={(profile?.stats?.totalQuizzes || 0) + (profile?.stats?.totalChallenges || 0)} style={styles.statValue} duration={400} />
               <Text style={styles.statLabel}>Games Played</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={{ fontSize: 20 }}>🏅</Text>
-              <AnimatedNumber value={profile?.stats?.accuracy || 0} style={styles.statValue} suffix="%" duration={600} />
+              <AnimatedNumber value={profile?.stats?.accuracy || 0} style={styles.statValue} suffix="%" duration={400} />
               <Text style={styles.statLabel}>Accuracy</Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {/* Quick Menu Actions */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.menuGroup}>
+        <View style={styles.menuGroup}>
           <Text style={styles.sectionTitle}>Account Menu</Text>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Wallet')}>
@@ -370,15 +369,15 @@ export default function ProfileScreen({ navigation }: Props) {
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.onSurfaceMuted} />
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* Logout Button */}
-        <Animated.View entering={FadeInDown.delay(250)}>
+        <View>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color={colors.error} />
             <Text style={styles.logoutText}>Log Out Account</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       </ScrollView>
 
       <AvatarPickerModal
