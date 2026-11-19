@@ -66,12 +66,12 @@ export function AppNavigator() {
         <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />
         <Stack.Screen name="OtpVerify" component={OtpVerifyScreen} />
         <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Quiz" component={QuizScreen} />
         <Stack.Screen name="QuizResult" component={QuizResultScreen} />
-        <Stack.Screen name="Wallet" component={WalletScreen} options={{ animation: 'none' }} />
-        <Stack.Screen name="Profile" component={ProfileScreen} options={{ animation: 'none' }} />
-        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ animation: 'none' }} />
+        <Stack.Screen name="Wallet" component={WalletScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Stack.Screen name="WithdrawalHistory" component={WithdrawalHistoryScreen} />
         <Stack.Screen name="ChallengeLobby" component={ChallengeLobbyScreen} />
         <Stack.Screen name="ChallengePlay" component={ChallengePlayScreen} options={{ animation: 'slide_from_right' }} />
