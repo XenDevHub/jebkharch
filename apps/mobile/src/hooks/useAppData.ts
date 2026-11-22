@@ -47,6 +47,7 @@ export const QUERY_KEYS = {
   withdrawalHistory: ['withdrawal', 'history'] as const,
   referralCode: ['referral', 'code'] as const,
   tickets: ['tickets'] as const,
+  dailyChallengeStatus: ['quiz', 'dailyChallengeStatus'] as const,
 };
 
 // ── Profile (with persistent cache for name, avatar, coins, performance stats & rank) ──
@@ -179,6 +180,30 @@ export function useWrongAnswers() {
       return res.data;
     },
     staleTime: 60 * 1000,
+  });
+}
+
+// ── Teams / Clans ──
+export function useTeams() {
+  return useQuery({
+    queryKey: QUERY_KEYS.teams,
+    queryFn: async () => {
+      const res = await api.team.getTeams();
+      return res.data?.data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
+// ── Daily Challenge Status (2x Coins) ──
+export function useDailyChallengeStatus() {
+  return useQuery({
+    queryKey: QUERY_KEYS.dailyChallengeStatus,
+    queryFn: async () => {
+      const res = await api.quiz.getDailyChallengeStatus();
+      return res.data;
+    },
+    staleTime: 30 * 1000,
   });
 }
 

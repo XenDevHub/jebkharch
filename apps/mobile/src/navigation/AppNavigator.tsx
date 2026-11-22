@@ -31,8 +31,8 @@ export type RootStackParamList = {
   OtpVerify: { phone: string };
   CreateProfile: { phone: string; otpCode: string; deviceId: string };
   Home: undefined;
-  Quiz: { categoryId: string; categoryName: string };
-  QuizResult: { score: number; total: number; coinsEarned: number; categoryId?: string; categoryName?: string };
+  Quiz: { categoryId: string; categoryName: string; isDailyChallenge?: boolean };
+  QuizResult: { score: number; total: number; coinsEarned: number; categoryId?: string; categoryName?: string; isDailyChallenge?: boolean };
   Wallet: undefined;
   Profile: undefined;
   Leaderboard: undefined;

@@ -136,7 +136,7 @@ function QuizLoadingView({ categoryName }: { categoryName: string }) {
 }
 
 export default function QuizScreen({ route, navigation }: Props) {
-  const { categoryId, categoryName } = route.params;
+  const { categoryId, categoryName, isDailyChallenge } = route.params;
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -202,7 +202,7 @@ export default function QuizScreen({ route, navigation }: Props) {
 
   const startQuiz = async () => {
     try {
-      const res = await api.quiz.startSession(categoryId);
+      const res = await api.quiz.startSession(categoryId, isDailyChallenge);
       setSessionId(res.data.sessionId);
       setQuestions(res.data.questions);
       progressAnim.value = withTiming(1 / res.data.questions.length, { duration: 500 });
@@ -259,12 +259,14 @@ export default function QuizScreen({ route, navigation }: Props) {
         const res = await api.quiz.completeSession(sessionId!);
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.dailyChallengeStatus });
         navigation.replace('QuizResult', {
           score: res.data.score,
           total: res.data.total,
           coinsEarned: res.data.coinsEarned,
           categoryId,
           categoryName,
+          isDailyChallenge,
         });
       } catch {
         navigation.replace('QuizResult', {
@@ -273,6 +275,7 @@ export default function QuizScreen({ route, navigation }: Props) {
           coinsEarned: 0,
           categoryId,
           categoryName,
+          isDailyChallenge,
         });
       }
     }

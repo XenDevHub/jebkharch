@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Trophy, Plus, UserX, RefreshCw, X, Shield, Calendar } from 'lucide-react';
+import { Users, Trophy, Plus, UserX, RefreshCw, X, Shield, Calendar, CheckCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'https://api.jaibkharch.com/api';
 
@@ -17,7 +17,7 @@ export default function TeamsAdmin() {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', prizePool: 0 });
+  const [form, setForm] = useState({ name: '', description: '', prizePool: 0, isVerified: true, badge: 'OFFICIAL' });
 
   const fetchTeams = async () => {
     setLoading(true);
@@ -41,10 +41,19 @@ export default function TeamsAdmin() {
     try {
       await apiFetch('/teams', { method: 'POST', body: JSON.stringify(form) });
       setShowForm(false);
-      setForm({ name: '', description: '', prizePool: 0 });
+      setForm({ name: '', description: '', prizePool: 0, isVerified: true, badge: 'OFFICIAL' });
       fetchTeams();
     } catch {
       alert('Failed to create team.');
+    }
+  };
+
+  const toggleVerify = async (id: string, isVerified: boolean) => {
+    try {
+      await apiFetch(`/teams/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ isVerified, badge: isVerified ? 'OFFICIAL' : null }) });
+      fetchTeams();
+    } catch {
+      alert('Failed to update verification status.');
     }
   };
 
@@ -142,6 +151,19 @@ export default function TeamsAdmin() {
               />
             </div>
           </div>
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="isVerified"
+              checked={form.isVerified}
+              onChange={e => setForm(f => ({ ...f, isVerified: e.target.checked }))}
+              className="rounded bg-slate-800 border-white/20 text-sky-500 focus:ring-sky-400"
+            />
+            <label htmlFor="isVerified" className="text-xs text-slate-300 cursor-pointer flex items-center gap-1.5">
+              <CheckCircle size={13} className="text-sky-400" />
+              <span>Official Admin Clan (Verified Badge & Priority Placement)</span>
+            </label>
+          </div>
           <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3">
             <button
               onClick={createTeam}
@@ -182,18 +204,37 @@ export default function TeamsAdmin() {
                     <div className="flex items-center space-x-2">
                       <span className="text-xs font-mono text-slate-400 font-bold">#{idx + 1}</span>
                       <h3 className="font-semibold text-slate-100 text-sm truncate">{t.name}</h3>
+                      {t.isVerified && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
+                          <CheckCircle size={9} className="text-sky-400" />
+                          <span>Verified</span>
+                        </span>
+                      )}
                     </div>
                     <p className="text-[11px] text-slate-400 line-clamp-1">{t.description || 'No description'}</p>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => deleteTeam(t.id)}
-                  aria-label="Delete team"
-                  className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0"
-                >
-                  <UserX size={15} />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => toggleVerify(t.id, !t.isVerified)}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      t.isVerified
+                        ? 'text-sky-400 bg-sky-500/10 hover:bg-sky-500/20'
+                        : 'text-slate-500 hover:text-sky-400 hover:bg-sky-500/10'
+                    }`}
+                    title={t.isVerified ? 'Remove Verified Status' : 'Mark as Verified'}
+                  >
+                    <CheckCircle size={15} />
+                  </button>
+                  <button
+                    onClick={() => deleteTeam(t.id)}
+                    aria-label="Delete team"
+                    className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  >
+                    <UserX size={15} />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-white/5">
@@ -251,7 +292,15 @@ export default function TeamsAdmin() {
                           {t.name ? t.name[0].toUpperCase() : 'T'}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-white truncate">{t.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold text-white truncate">{t.name}</p>
+                            {t.isVerified && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30 shrink-0">
+                                <CheckCircle size={10} className="text-sky-400" />
+                                <span>Verified</span>
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-slate-400 truncate">{t.description || 'No description'}</p>
                         </div>
                       </div>
@@ -272,13 +321,26 @@ export default function TeamsAdmin() {
                       {new Date(t.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => deleteTeam(t.id)}
-                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
-                        title="Delete team"
-                      >
-                        <UserX size={15} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => toggleVerify(t.id, !t.isVerified)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            t.isVerified
+                              ? 'text-sky-400 bg-sky-500/10 hover:bg-sky-500/20'
+                              : 'text-slate-500 hover:text-sky-400 hover:bg-sky-500/10'
+                          }`}
+                          title={t.isVerified ? 'Remove Verified Status' : 'Mark as Verified'}
+                        >
+                          <CheckCircle size={15} />
+                        </button>
+                        <button
+                          onClick={() => deleteTeam(t.id)}
+                          className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          title="Delete team"
+                        >
+                          <UserX size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl, ActivityIndicator, Image,
+  TouchableOpacity, RefreshControl, ActivityIndicator, Image, Alert,
 } from 'react-native';
 import Animated, {
   FadeInDown, FadeInRight,
@@ -22,7 +22,8 @@ import { colors, spacing, typography, borderRadius, shadows } from '../theme/des
 import { api } from '../api/client';
 import {
   useProfile, useCategories, useWalletBalance,
-  useStreakStatus, useLives, useTickets, QUERY_KEYS,
+  useStreakStatus, useLives, useTickets, useTeams,
+  useDailyChallengeStatus, QUERY_KEYS,
 } from '../hooks/useAppData';
 import { AdMobManager } from '../services/adMobService';
 import { syncPushTokenWithBackend } from '../services/notificationService';
@@ -76,6 +77,13 @@ export default function HomeScreen({ navigation }: any) {
   const { data: streakData } = useStreakStatus();
   const { data: livesData } = useLives();
   const { data: ticketsData } = useTickets();
+  const { data: teamsData = [] } = useTeams();
+  const { data: dailyStatus } = useDailyChallengeStatus();
+
+  // Find user clan & verified clans
+  const myTeam = profileData?.team || (profileData?.teamId ? teamsData.find((t: any) => t.id === profileData.teamId) : null);
+  const verifiedClans = teamsData.filter((t: any) => t.isVerified).slice(0, 3);
+  const canPlayDaily = dailyStatus?.canPlay ?? true;
 
   // Derived values with safe fallbacks
   const categories: Category[] = categoriesData || FALLBACK_CATEGORIES;
@@ -102,6 +110,28 @@ export default function HomeScreen({ navigation }: any) {
       return;
     }
     navigation.navigate('Quiz', { categoryId, categoryName });
+  };
+
+  const handleDailyChallengePress = () => {
+    if (!canPlayDaily) {
+      Alert.alert(
+        'Daily Challenge Mukammal! ✅',
+        'Aapne aaj ka 2× Coins Daily Challenge pehle hi pura kar liya hai! Kal subah 12:00 AM par naya challenge milega.'
+      );
+      return;
+    }
+    const dailyCat = categories.find((c: any) => !c.isPremium) || categories[0];
+    if (dailyCat) {
+      if (lives <= 0) {
+        setShowLivesModal(true);
+        return;
+      }
+      navigation.navigate('Quiz', {
+        categoryId: dailyCat.id,
+        categoryName: `${dailyCat.name} (Daily Challenge 2×)`,
+        isDailyChallenge: true,
+      });
+    }
   };
 
   // Sync push token with backend whenever Home is viewed
@@ -330,39 +360,139 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </Animated.View>
 
-        {/* ── Daily Challenge Banner ── */}
+        {/* ── Daily Challenge Banner (Real 2× Coins) ── */}
         <Animated.View entering={FadeInDown.delay(100)}>
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.dailyCard}
-            onPress={() => {
-              const dailyCat = categories.find((c: any) => !c.isPremium) || categories[0];
-              if (dailyCat) {
-                startQuiz(dailyCat.id, `${dailyCat.name} (Daily Challenge)`);
-              }
-            }}
+            onPress={handleDailyChallengePress}
           >
             <LinearGradient
-              colors={[`${colors.secondary}25`, `${colors.secondary}08`]}
+              colors={canPlayDaily ? [`${colors.secondary}25`, `${colors.secondary}08`] : ['rgba(16, 185, 129, 0.2)', 'rgba(16, 185, 129, 0.05)']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={styles.dailyGradient}
             >
               <View style={styles.dailyLeft}>
-                <View style={styles.dailyBadge}>
-                  <Text style={styles.dailyBadgeText}>⚡ 2× COINS</Text>
+                <View style={[styles.dailyBadge, !canPlayDaily && { backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 0.4)' }]}>
+                  <Text style={[styles.dailyBadgeText, !canPlayDaily && { color: '#10b981' }]}>
+                    {canPlayDaily ? '⚡ 2× COINS REWARD' : '✅ COMPLETED TODAY'}
+                  </Text>
                 </View>
                 <Text style={styles.dailyTitle}>Daily Challenge</Text>
-                <Text style={styles.dailySubtitle}>Aaj ka special quiz — double rewards!</Text>
+                <Text style={styles.dailySubtitle}>
+                  {canPlayDaily
+                    ? 'Aaj ka special quiz — jeeto double (2×) coins!'
+                    : 'Aapne aaj ka challenge jeet liya! Kal naya challenge aayega.'}
+                </Text>
               </View>
               <View style={{ alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 36 }}>🎯</Text>
+                <Text style={{ fontSize: 36 }}>{canPlayDaily ? '🎯' : '🏆'}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                  <Text style={{ ...typography.labelSm, color: colors.secondary, fontSize: 11, fontWeight: '700' }}>Play</Text>
-                  <Ionicons name="arrow-forward" size={12} color={colors.secondary} />
+                  <Text style={{ ...typography.labelSm, color: canPlayDaily ? colors.secondary : '#10b981', fontSize: 11, fontWeight: '700' }}>
+                    {canPlayDaily ? 'Play' : 'Done'}
+                  </Text>
+                  {canPlayDaily && <Ionicons name="arrow-forward" size={12} color={colors.secondary} />}
                 </View>
               </View>
             </LinearGradient>
           </TouchableOpacity>
+        </Animated.View>
+
+        {/* ── Clan Battles & City Squads ── */}
+        <Animated.View entering={FadeInDown.delay(120)}>
+          <View style={styles.clanSection}>
+            <View style={styles.clanHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 18 }}>⚔️</Text>
+                <Text style={styles.clanSectionTitle}>Clans & City Squads</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Teams')} activeOpacity={0.7}>
+                <Text style={styles.clanSeeAll}>View All ➔</Text>
+              </TouchableOpacity>
+            </View>
+
+            {myTeam ? (
+              // ── Active Clan Card ──
+              <TouchableOpacity
+                activeOpacity={0.88}
+                style={styles.myClanCard}
+                onPress={() => navigation.navigate('Teams')}
+              >
+                <LinearGradient
+                  colors={['#064e3b', '#022c22', '#0f172a']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.myClanGradient}
+                >
+                  <View style={styles.myClanLeft}>
+                    <View style={styles.clanAvatarBox}>
+                      <Text style={{ fontSize: 22 }}>🛡️</Text>
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <Text style={styles.myClanName} numberOfLines={1}>{myTeam.name}</Text>
+                        {myTeam.isVerified && (
+                          <View style={styles.verifiedBadgeMini}>
+                            <Ionicons name="checkmark-circle" size={11} color="#38bdf8" />
+                            <Text style={styles.verifiedTextMini}>Official</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.myClanSub}>
+                        👥 {myTeam._count?.members || 1} Members  •  Tap to view clan
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.clanScorePill}>
+                    <Text style={styles.clanScorePillValue}>🏆 {myTeam.score || 0}</Text>
+                    <Text style={styles.clanScorePillLabel}>Clan Pts</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              // ── Recruitment Banner with Verified Clans ──
+              <TouchableOpacity
+                activeOpacity={0.88}
+                style={styles.recruitCard}
+                onPress={() => navigation.navigate('Teams')}
+              >
+                <LinearGradient
+                  colors={['rgba(14, 165, 233, 0.16)', 'rgba(6, 78, 59, 0.22)', 'rgba(15, 23, 42, 0.95)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.recruitGradient}
+                >
+                  <View style={styles.recruitTop}>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.recruitPill}>
+                        <Ionicons name="shield-checkmark" size={11} color="#38bdf8" />
+                        <Text style={styles.recruitPillText}>OFFICIAL CITY SQUADS OPEN</Text>
+                      </View>
+                      <Text style={styles.recruitTitle}>Join Lahore, Karachi or Create Squad!</Text>
+                      <Text style={styles.recruitDesc}>Play quizzes with teammates & pool points for city glory 🏆</Text>
+                    </View>
+                    <View style={styles.recruitArrowBox}>
+                      <Ionicons name="arrow-forward" size={18} color="#38bdf8" />
+                    </View>
+                  </View>
+
+                  {/* Verified Clans Chips Preview */}
+                  <View style={styles.verifiedChipsRow}>
+                    {(verifiedClans.length > 0 ? verifiedClans : [
+                      { id: '1', name: 'Lahore Champions', score: 1240 },
+                      { id: '2', name: 'Karachi Kings', score: 980 },
+                    ]).map((t: any) => (
+                      <View key={t.id} style={styles.verifiedChip}>
+                        <Ionicons name="checkmark-circle" size={12} color="#38bdf8" />
+                        <Text style={styles.verifiedChipName} numberOfLines={1}>{t.name}</Text>
+                        <Text style={styles.verifiedChipScore}>🏆 {t.score || 0}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
         </Animated.View>
 
         {/* ── Hero Banner ── */}
@@ -877,5 +1007,190 @@ const styles = StyleSheet.create({
     ...typography.bodySm,
     color: colors.onSurfaceVariant,
     marginTop: 2,
+  },
+
+  // ── Clan & Squads Home Styles ──
+  clanSection: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  clanHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs + 2,
+  },
+  clanSectionTitle: {
+    ...typography.labelMd,
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  clanSeeAll: {
+    ...typography.labelSm,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  myClanCard: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.4)',
+  },
+  myClanGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  myClanLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+    minWidth: 0,
+  },
+  clanAvatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+  },
+  myClanName: {
+    ...typography.labelMd,
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  myClanSub: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  clanScorePill: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(234, 179, 8, 0.3)',
+  },
+  clanScorePillValue: {
+    ...typography.labelSm,
+    color: colors.secondary,
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  clanScorePillLabel: {
+    fontSize: 9,
+    color: colors.onSurfaceMuted,
+  },
+  verifiedBadgeMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: 'rgba(56, 189, 248, 0.18)',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+  },
+  verifiedTextMini: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#38bdf8',
+  },
+  recruitCard: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+  },
+  recruitGradient: {
+    padding: spacing.md,
+    gap: spacing.sm + 2,
+  },
+  recruitTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  recruitPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  recruitPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#38bdf8',
+    letterSpacing: 0.5,
+  },
+  recruitTitle: {
+    ...typography.labelMd,
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  recruitDesc: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  recruitArrowBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+  },
+  verifiedChipsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+    marginTop: 2,
+  },
+  verifiedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+  },
+  verifiedChipName: {
+    ...typography.labelSm,
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '600',
+    maxWidth: 120,
+  },
+  verifiedChipScore: {
+    ...typography.labelSm,
+    color: colors.secondary,
+    fontSize: 10,
+    fontWeight: '700',
   },
 });

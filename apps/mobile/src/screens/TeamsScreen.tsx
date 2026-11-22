@@ -134,7 +134,15 @@ export default function TeamsScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.myClanName}>{myTeam.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Text style={styles.myClanName}>{myTeam.name}</Text>
+              {myTeam.isVerified && (
+                <View style={styles.verifiedBadge}>
+                  <Ionicons name="checkmark-circle" size={14} color="#38bdf8" />
+                  <Text style={styles.verifiedText}>Official</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.myClanDesc}>{myTeam.description || 'Competing for top leaderboard rank'}</Text>
 
             <View style={styles.myClanStatsRow}>
@@ -203,8 +211,14 @@ export default function TeamsScreen({ navigation }: any) {
                 </View>
 
                 <View style={styles.teamInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <Text style={styles.teamName}>{t.name}</Text>
+                    {t.isVerified && (
+                      <View style={styles.verifiedBadge}>
+                        <Ionicons name="checkmark-circle" size={13} color="#38bdf8" />
+                        <Text style={styles.verifiedText}>Official</Text>
+                      </View>
+                    )}
                     {isMyTeam && (
                       <View style={styles.activePill}>
                         <Text style={styles.activePillText}>You</Text>
@@ -313,4 +327,21 @@ const styles = StyleSheet.create({
   joinBtnText: { ...typography.labelSm, color: colors.primary, fontWeight: '700' },
   joinedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: borderRadius.pill },
   joinedBadgeText: { color: '#10b981', fontSize: 11, fontWeight: '700' },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  verifiedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#38bdf8',
+    letterSpacing: 0.3,
+  },
 });

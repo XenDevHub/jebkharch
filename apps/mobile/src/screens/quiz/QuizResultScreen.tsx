@@ -80,7 +80,7 @@ function ConfettiParticle({ index }: { index: number }) {
 }
 
 export default function QuizResultScreen({ route, navigation }: Props) {
-  const { score, total, coinsEarned, categoryId, categoryName } = route.params;
+  const { score, total, coinsEarned, categoryId, categoryName, isDailyChallenge } = route.params;
   const queryClient = useQueryClient();
   const isWinner = score > total / 2;
   const percentage = Math.round((score / total) * 100);
@@ -189,7 +189,9 @@ export default function QuizResultScreen({ route, navigation }: Props) {
               {isWinner && (
                 <View style={styles.scoreItem}>
                   <Ionicons name="star" size={20} color={colors.secondary} />
-                  <Text style={styles.scoreItemLabel}>Coins Kmaye</Text>
+                  <Text style={styles.scoreItemLabel}>
+                    {isDailyChallenge ? '2× Coins Kmaye' : 'Coins Kmaye'}
+                  </Text>
                   <AnimatedNumber
                     value={coinsEarned}
                     style={styles.coinsValue}
@@ -201,6 +203,23 @@ export default function QuizResultScreen({ route, navigation }: Props) {
             </View>
           </LinearGradient>
         </Animated.View>
+
+        {isDailyChallenge && (
+          <Animated.View entering={FadeInDown.delay(500)} style={styles.dailyMultiplierBadge}>
+            <LinearGradient
+              colors={['rgba(234, 179, 8, 0.25)', 'rgba(234, 179, 8, 0.08)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.dailyMultiplierGradient}
+            >
+              <Text style={{ fontSize: 24 }}>⚡</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dailyMultiplierTitle}>2× Daily Challenge Bonus!</Text>
+                <Text style={styles.dailyMultiplierSub}>Double reward added to your wallet 🎉</Text>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        )}
       </View>
 
       {/* Action buttons */}
@@ -316,4 +335,29 @@ const styles = StyleSheet.create({
     gap: spacing.xs, paddingBottom: spacing.xl,
   },
   leaderboardText: { ...typography.labelSm, color: colors.primary },
+  dailyMultiplierBadge: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(234, 179, 8, 0.4)',
+  },
+  dailyMultiplierGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  dailyMultiplierTitle: {
+    ...typography.labelMd,
+    color: colors.secondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  dailyMultiplierSub: {
+    ...typography.bodySm,
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+  },
 });

@@ -130,8 +130,8 @@ export const api = {
     getCategories: async () => {
       return apiClient.get('/quiz/categories');
     },
-    startSession: async (categoryId: string) => {
-      const res = await apiClient.post('/quiz/start', { categoryId });
+    startSession: async (categoryId: string, isDailyChallenge = false) => {
+      const res = await apiClient.post('/quiz/start', { categoryId, isDailyChallenge });
       const mappedQuestions = res.data.questions.map((q: any) => ({
         id: q.id,
         text: q.questionText,
@@ -149,6 +149,9 @@ export const api = {
         }
       };
     },
+    getDailyChallengeStatus: async () => {
+      return apiClient.get('/quiz/daily-challenge-status');
+    },
     submitAnswer: async (sessionId: string, questionId: string, answerId: string) => {
       return apiClient.post('/quiz/answer', {
         sessionId,
@@ -163,7 +166,9 @@ export const api = {
         data: {
           score: res.data.score,
           total: res.data.totalQuestions,
-          coinsEarned: res.data.coinsWon
+          coinsEarned: res.data.coinsWon,
+          isDailyChallenge: res.data.isDailyChallenge,
+          multiplier: res.data.multiplier,
         }
       };
     },

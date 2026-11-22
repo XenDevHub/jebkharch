@@ -58,11 +58,62 @@ export class QuizService {
 
   // ── Start Quiz ────────────────────────────────────────────────────────────
 
-  async startQuiz(userId: string, categoryId: string) {
+  async getDailyChallengeStatus(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todaySession = await this.prisma.quizSession.findFirst({
+      where: {
+        userId,
+        isDailyChallenge: true,
+        startedAt: { gte: today },
+      },
+      orderBy: { startedAt: 'desc' },
+      include: { category: true },
+    });
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const hasPlayed = !!todaySession && todaySession.isCompleted;
+
+    return {
+      canPlay: !hasPlayed,
+      alreadyPlayed: hasPlayed,
+      isCompleted: hasPlayed,
+      nextAvailableAt: tomorrow.toISOString(),
+      lastSession: todaySession ? {
+        sessionId: todaySession.id,
+        score: todaySession.score,
+        coinsWon: todaySession.coinsWon,
+        categoryName: todaySession.category?.name,
+        completedAt: todaySession.endedAt,
+      } : null,
+    };
+  }
+
+  async startQuiz(userId: string, categoryId: string, isDailyChallenge = false) {
     // Validate category
     const category = await this.prisma.category.findUnique({ where: { id: categoryId } });
     if (!category || !category.isActive) {
       throw new NotFoundException('Category not found.');
+    }
+
+    // Check if daily challenge was already played today
+    if (isDailyChallenge) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayCompleted = await this.prisma.quizSession.findFirst({
+        where: {
+          userId,
+          isDailyChallenge: true,
+          isCompleted: true,
+          startedAt: { gte: today },
+        },
+      });
+      if (todayCompleted) {
+        throw new BadRequestException('Aaj ka Daily Challenge pehle hi mukammal ho chuka hai! Kal naya challenge milega.');
+      }
     }
 
     // Premium check
@@ -124,6 +175,7 @@ export class QuizService {
           id: uuidv4(),
           userId,
           categoryId,
+          isDailyChallenge: !!isDailyChallenge,
           coinsSpent: COIN_CONSTANTS.NORMAL_QUIZ_ENTRY,
         },
       });
@@ -224,8 +276,9 @@ export class QuizService {
     const totalTimeTaken = session.answers.reduce((sum, a) => sum + a.timeTaken, 0);
     const xpGained = correctCount * 10;
 
-    // Determine reward
-    const rawReward = QUIZ_REWARDS[correctCount] ?? 0;
+    // Determine reward with 2x multiplier for Daily Challenge
+    const baseReward = QUIZ_REWARDS[correctCount] ?? 0;
+    const rawReward = session.isDailyChallenge ? baseReward * 2 : baseReward;
 
     // Apply daily earning cap (only quiz gameplay earnings, excludes missions/challenges)
     const todayEarned = await this.getTodayEarned(userId);
@@ -255,13 +308,18 @@ export class QuizService {
         const newXp = user!.xp + finalXp;
         const newLevel = Math.max(user!.level, Math.floor(Math.sqrt(newXp / 100)) + 1);
 
+        const userUpdateData: any = {
+          coins: { increment: coinsWon },
+          xp: newXp,
+          level: newLevel,
+        };
+        if (session.isDailyChallenge) {
+          userUpdateData.lastDailyChallengeAt = new Date();
+        }
+
         await tx.user.update({
           where: { id: userId },
-          data: {
-            coins: { increment: coinsWon },
-            xp: newXp,
-            level: newLevel,
-          },
+          data: userUpdateData,
         });
 
         // Award points to the user's Clan/Team if they belong to one
@@ -283,7 +341,9 @@ export class QuizService {
             referenceId: sessionId,
             balanceBefore: user!.coins,
             balanceAfter: user!.coins + coinsWon,
-            description: `Quiz reward: ${correctCount}/${QUIZ_CONSTANTS.QUESTIONS_PER_SESSION} correct`,
+            description: session.isDailyChallenge
+              ? `Daily Challenge 2× reward: ${correctCount}/${QUIZ_CONSTANTS.QUESTIONS_PER_SESSION} (${coinsWon} coins)`
+              : `Quiz reward: ${correctCount}/${QUIZ_CONSTANTS.QUESTIONS_PER_SESSION} correct`,
           },
         });
       } else {
@@ -550,8 +610,9 @@ Return ONLY a valid JSON object with a "questions" key containing an array of qu
       accuracy: Math.round((session.score / session.totalQ) * 100),
       timeTaken: session.timeTaken,
       coinsWon: session.coinsWon,
-      coinsSpent: session.coinsSpent,
-      xpGained: session.xpGained,
+      coinsEarned: session.coinsWon,
+      isDailyChallenge: session.isDailyChallenge ?? false,
+      multiplier: session.isDailyChallenge ? 2 : 1,
       categoryName: session.category?.name,
       answers: session.answers?.map((a: any) => ({
         questionId: a.questionId,

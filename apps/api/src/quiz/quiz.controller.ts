@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { IsString, IsIn, IsInt, Min, Max, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsIn, IsInt, Min, Max, IsOptional, IsBoolean } from 'class-validator';
 
 class StartQuizDto {
   @ApiProperty() @IsString() categoryId: string;
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() isDailyChallenge?: boolean;
 }
 class AnswerDto {
   @ApiProperty() @IsString() sessionId: string;
@@ -32,10 +32,16 @@ export class QuizController {
     return this.quizService.getCategories(userId);
   }
 
+  @Get('daily-challenge-status')
+  @ApiOperation({ summary: 'Get Daily Challenge 2x availability and today status' })
+  getDailyChallengeStatus(@CurrentUser('id') userId: string) {
+    return this.quizService.getDailyChallengeStatus(userId);
+  }
+
   @Post('start')
   @ApiOperation({ summary: 'Start a new quiz session (deducts entry fee)' })
   startQuiz(@CurrentUser('id') userId: string, @Body() dto: StartQuizDto) {
-    return this.quizService.startQuiz(userId, dto.categoryId);
+    return this.quizService.startQuiz(userId, dto.categoryId, dto.isDailyChallenge);
   }
 
   @Post('answer')

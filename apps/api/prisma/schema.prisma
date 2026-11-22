@@ -132,7 +132,8 @@ model User {
   lastLoginIp  String?
 
   // Daily tracking
-  lastDailyBonusAt DateTime?
+  lastDailyBonusAt     DateTime?
+  lastDailyChallengeAt DateTime?
 
   // Streak
   currentStreak      Int      @default(0)
@@ -257,10 +258,11 @@ model Question {
 }
 
 model QuizSession {
-  id          String    @id @default(uuid())
-  userId      String
-  categoryId  String
-  score       Int       @default(0)
+  id               String    @id @default(uuid())
+  userId           String
+  categoryId       String
+  isDailyChallenge Boolean   @default(false)
+  score            Int       @default(0)
   totalQ      Int       @default(10)
   coinsSpent  Int       @default(0)
   coinsWon    Int       @default(0)
@@ -572,6 +574,8 @@ model Team {
   logo        String?
   description String?
   score       Int      @default(0)
+  isVerified  Boolean  @default(false)
+  badge       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
