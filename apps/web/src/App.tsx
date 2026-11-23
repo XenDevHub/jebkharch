@@ -1,68 +1,41 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from '@/components/Layout';
-import { LoginPage } from '@/pages/Login';
-import { DashboardPage } from '@/pages/Dashboard';
-import { UsersPage } from '@/pages/Users';
-import { WithdrawalsPage } from '@/pages/Withdrawals';
-import { QuestionsPage } from '@/pages/Questions';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Home } from '@/pages/Home';
+import { PrivacyPolicy } from '@/pages/PrivacyPolicy';
+import { Terms } from '@/pages/Terms';
 
-// Protected Route Wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('adminToken');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return <Layout>{children}</Layout>;
-};
-
-function App() {
-  const [isInitializing, setIsInitializing] = useState(true);
+function ScrollToTop() {
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    // Add dark mode class by default for the premium look
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
+function App() {
+  useEffect(() => {
+    // Ensure dark mode class is applied to root
     document.documentElement.classList.add('dark');
-    setIsInitializing(false);
   }, []);
 
-  if (isInitializing) return null;
-
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <UsersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/withdrawals"
-        element={
-          <ProtectedRoute>
-            <WithdrawalsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/questions"
-        element={
-          <ProtectedRoute>
-            <QuestionsPage />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
+        {/* Redirect any legacy admin paths to home page */}
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        <Route path="/users" element={<Navigate to="/" replace />} />
+        <Route path="/withdrawals" element={<Navigate to="/" replace />} />
+        <Route path="/questions" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

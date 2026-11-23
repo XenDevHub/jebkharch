@@ -28,3 +28,4 @@ npm-debug.log*
 # Docker
 docker-compose.override.yml
 *.jks
+*.apk
