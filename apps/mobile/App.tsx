@@ -17,6 +17,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './src/api/queryClient';
 import { registerForPushNotificationsAsync, setupNotificationListeners } from './src/services/notificationService';
 import { AdMobManager } from './src/services/adMobService';
+import { NetworkStatusBanner } from './src/components/NetworkStatusBanner';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,6 +52,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaView style={styles.safe}>
         <AppNavigator />
+        <NetworkStatusBanner />
         <StatusBar style="light" />
       </SafeAreaView>
     </QueryClientProvider>

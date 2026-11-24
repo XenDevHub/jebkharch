@@ -211,7 +211,10 @@ export default function QuizScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.walletBalance });
     } catch (err: any) {
       console.log(err);
-      const msg = err?.response?.data?.message || 'Quiz shuru nahi ho saki. Dobara koshish karein.';
+      const isNetwork = !err?.response && (err?.message?.includes('Network Error') || err?.code === 'ERR_NETWORK' || err?.code === 'ECONNABORTED');
+      const msg = isNetwork
+        ? 'Internet connection nahi hai! Barah-e-karam Wi-Fi ya mobile data on karein.'
+        : err?.response?.data?.message || 'Quiz shuru nahi ho saki. Dobara koshish karein.';
       setErrorMessage(msg);
     } finally { setLoading(false); }
   };
@@ -302,13 +305,18 @@ export default function QuizScreen({ route, navigation }: Props) {
   if (questions.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={{ fontSize: 48 }}>😕</Text>
-        <Text style={styles.loadingText}>{errorMessage || 'Quiz load nahi hui'}</Text>
+        <Text style={{ fontSize: 52 }}>📡</Text>
+        <Text style={[styles.loadingText, { color: colors.onSurface, fontWeight: '700', marginTop: 14, textAlign: 'center', marginHorizontal: 24 }]}>
+          {errorMessage || 'Internet Connection Check Karein'}
+        </Text>
+        <Text style={{ color: colors.onSurfaceVariant, fontSize: 13, textAlign: 'center', marginHorizontal: 32, marginTop: 6, marginBottom: 24, lineHeight: 18 }}>
+          Live questions aur points sync karne ke liye active internet zaroori hai.
+        </Text>
         <TouchableOpacity
           style={[styles.goBackBtn, { backgroundColor: colors.primary, marginBottom: 12 }]}
           onPress={() => { setLoading(true); setErrorMessage(null); startQuiz(); }}
         >
-          <Text style={[styles.goBackText, { color: '#fff' }]}>🔄 Dobara Koshish Karein</Text>
+          <Text style={[styles.goBackText, { color: '#002a1e', fontWeight: '700' }]}>🔄 Dobara Koshish Karein</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.goBackBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.goBackText}>Wapas Jao</Text>

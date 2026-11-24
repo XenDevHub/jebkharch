@@ -27,6 +27,7 @@ import {
 } from '../hooks/useAppData';
 import { AdMobManager } from '../services/adMobService';
 import { syncPushTokenWithBackend } from '../services/notificationService';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 type Category = { id: string; name: string; icon: string; isPremium: boolean };
 
@@ -69,6 +70,7 @@ const TournamentCountdown = React.memo(function TournamentCountdown({
 
 export default function HomeScreen({ navigation }: any) {
   const queryClient = useQueryClient();
+  const { isOffline } = useNetworkStatus();
 
   // ── Cached queries — instant on revisit, background refresh ──
   const { data: profileData } = useProfile();
@@ -105,6 +107,13 @@ export default function HomeScreen({ navigation }: any) {
   const [showTicketModal, setShowTicketModal] = useState(false);
 
   const startQuiz = (categoryId: string, categoryName: string) => {
+    if (isOffline) {
+      Alert.alert(
+        'Internet Connection Nahi Hai 📡',
+        'Quiz shuru karne ke liye active internet zaroori hai. Barah-e-karam apna Wi-Fi ya mobile data on karein.'
+      );
+      return;
+    }
     if (lives <= 0) {
       setShowLivesModal(true);
       return;
@@ -113,6 +122,13 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handleDailyChallengePress = () => {
+    if (isOffline) {
+      Alert.alert(
+        'Internet Connection Nahi Hai 📡',
+        'Daily Challenge khelne ke liye active internet zaroori hai. Barah-e-karam apna Wi-Fi ya mobile data on karein.'
+      );
+      return;
+    }
     if (!canPlayDaily) {
       Alert.alert(
         'Daily Challenge Mukammal! ✅',
@@ -150,6 +166,10 @@ export default function HomeScreen({ navigation }: any) {
   }));
 
   const onRefresh = async () => {
+    if (isOffline) {
+      setRefreshing(false);
+      return;
+    }
     setRefreshing(true);
     // Invalidate all cached queries — triggers background refetch
     await queryClient.invalidateQueries();
